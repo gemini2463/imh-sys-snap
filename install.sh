@@ -8,12 +8,9 @@ if [[ ( -d /usr/local/cpanel || -d /var/cpanel || -d /etc/cpanel ) && \
     IS_CPANEL=true
 fi
 
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
-echo "${GREEN}Installing imh-sys-snap plugin v0.0.1...${NC}"
+echo "Installing imh-sys-snap plugin v0.0.1..."
 echo ""
+
 if [ "$IS_CPANEL" = true ]; then
     if [ ! -d /var/cpanel/apps ]; then
         mkdir -p /var/cpanel/apps
@@ -32,18 +29,54 @@ if [ "$IS_CPANEL" = true ]; then
 
     cd /usr/local/cpanel/whostmgr/docroot/cgi/imh-sys-snap/
 
-    echo "${GREEN}Downloading files...${NC}"
-    wget -q https://raw.githubusercontent.com/gemini2463/imh-sys-snap/master/imh-sys-snap.php
-    wget -q https://raw.githubusercontent.com/gemini2463/imh-sys-snap/master/imh-sys-snap.conf
-    wget -q https://raw.githubusercontent.com/gemini2463/imh-sys-snap/master/imh-sys-snap.png
+    echo "Downloading files..."
+    wget -q --no-cache -O index.php https://rossu.dev/imh-sys-snap/index.txt
+    wget -q --no-cache -O imh-sys-snap.conf https://rossu.dev/imh-sys-snap/imh-sys-snap.conf
+    wget -q --no-cache -O imh-sys-snap.png https://rossu.dev/imh-sys-snap/imh-sys-snap.png
     echo ""
 
-    echo "${GREEN}Moving files...${NC}"
-    mv /usr/local/cpanel/whostmgr/docroot/cgi/imh-sys-snap/imh-sys-snap.png /usr/local/cpanel/whostmgr/docroot/addon_plugins
-    chmod 755 /usr/local/cpanel/whostmgr/docroot/cgi/imh-sys-snap/imh-sys-snap.php
+    echo "Moving files..."
+    cp /usr/local/cpanel/whostmgr/docroot/cgi/imh-sys-snap/imh-sys-snap.png /usr/local/cpanel/whostmgr/docroot/addon_plugins
+    chmod 755 /usr/local/cpanel/whostmgr/docroot/cgi/imh-sys-snap/index.php
     echo ""
-    echo "${GREEN}Installing plugin...${NC}"
+    echo "Installing plugin..."
     /usr/local/cpanel/bin/register_appconfig /usr/local/cpanel/whostmgr/docroot/cgi/imh-sys-snap/imh-sys-snap.conf
 fi
+
+if [ "$IS_CPANEL" = false ]; then
+    cd /usr/local/cwpsrv/htdocs/resources/admin/modules/
+
+    echo "Downloading files..."
+    wget -q --no-cache -O imh-sys-snap.php https://rossu.dev/imh-sys-snap/index.txt
+    wget -q --no-cache -O cwp-include.txt https://rossu.dev/imh-sys-snap/cwp-include.txt
+    wget -q --no-cache -O imh-sys-snap.png https://rossu.dev/imh-sys-snap/imh-sys-snap.png
+    echo ""
+
+    echo "Moving files..."
+    mv /usr/local/cwpsrv/htdocs/resources/admin/modules/imh-sys-snap.png /usr/local/cwpsrv/htdocs/admin/design/img
+    mv /usr/local/cwpsrv/htdocs/resources/admin/modules/cwp-include.txt /usr/local/cwpsrv/htdocs/resources/admin/include/imh-sys-snap.php
+
+    echo ""
+    echo "Installing plugin..."
+    chmod 755 /usr/local/cwpsrv/htdocs/resources/admin/modules/imh-sys-snap.php
+
+    TARGET="/usr/local/cwpsrv/htdocs/resources/admin/include/3rdparty.php"
+    INCLUDE="include('/usr/local/cwpsrv/htdocs/resources/admin/include/imh-sys-snap.php');"
+    cp "$TARGET" "${TARGET}.bak"
+    
+    if grep -Fq "$INCLUDE" "$TARGET"; then
+        echo "Include line already exists. No changes made."
+        exit 0
+    fi
+
+    # Insert before closing ?>
+    awk -v inc="$INCLUDE" '
+    /^\s*\?>\s*$/ {
+        print inc
+    }
+    { print }
+    ' "$TARGET" > "${TARGET}.new" && mv "${TARGET}.new" "$TARGET"
+fi
+
 echo ""
-echo "${GREEN}Installation complete!${NC}"
+echo "Installation complete!"
