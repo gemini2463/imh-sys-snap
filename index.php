@@ -8,11 +8,11 @@
  *
  * Compatible with:
  *   - cPanel/WHM: /usr/local/cpanel/whostmgr/docroot/cgi/imh-sys-snap/index.php
- *   - CWP:       /usr/local/cwpsrv/htdocs/resources/admin/modules/imh-sys-snap/index.php
+ *   - CWP:       /usr/local/cwpsrv/htdocs/resources/admin/modules/imh-sys-snap.php
  *
  * Author: Ross Uber
  * Maintainer: InMotion Hosting
- * Version: 0.0.1
+ * Version: 0.0.2
  */
 
 
@@ -932,6 +932,15 @@ echo "</div>";
 
 // Get sar -q and sar -B data
 
+function parse_sar_time($timestr)
+{
+    // supports "01:10:01 AM" or "13:10:01"
+    $fmt = (stripos($timestr, 'AM') !== false || stripos($timestr, 'PM') !== false) ? 'h:i:s A' : 'H:i:s';
+    $dt = DateTime::createFromFormat($fmt, $timestr);
+    if (!$dt) return false;
+    return $dt;
+}
+
 list($header_q, $sarq) = getSarQData();
 $row_idx = 0;
 
@@ -959,19 +968,63 @@ if (!$sarq) {
         echo "<th>" . htmlspecialchars($col) . "</th>";
     }
     echo "</thead>";
-    foreach ($merged as $row) {
-        // Alternate even/odd rows, odd rows get light gray background
-        $row_class = ($row_idx ?? 0) % 2 === 1 ? " class='imh-table-alt'" : "";
+
+    $prev_time_dt = null;
+    $row_idx = 0;
+    foreach ($merged as $i => $row) {
+        $this_time_str = $row['Time'];
+        $this_time_dt = parse_sar_time($this_time_str);
+        if (!$this_time_dt) {
+            // fallback: skip
+            continue;
+        }
+
+        // Calculate interval
+        if ($prev_time_dt) {
+            $start_dt = $prev_time_dt;
+            $end_dt = $this_time_dt;
+        } else {
+            // First row: interval is [this_time, this_time+1min]
+            $start_dt = clone $this_time_dt;
+            $end_dt = clone $this_time_dt;
+            $end_dt->modify('+1 minute');
+        }
+        // For POST params
+        $start_hour = (int)$start_dt->format('H');
+        $start_min  = (int)$start_dt->format('i');
+        $end_hour   = (int)$end_dt->format('H');
+        $end_min    = (int)$end_dt->format('i');
+
+        $row_class = ($row_idx % 2 === 1) ? " class='imh-table-alt'" : "";
         echo "<tr$row_class>";
-        foreach ($final_header as $col) {
-            echo "<td class='text-right'>" . htmlspecialchars(isset($row[$col]) ? $row[$col] : '') . "</td>";
+
+        foreach ($final_header as $colidx => $col) {
+            if ($colidx === 0) {
+                // First column ("Time") - clickable link wrapped in POST form
+                echo "<td class='text-right'>";
+                echo "<form method='post' style='display:inline;' class='sar-time-link-form'>";
+                echo "<input type='hidden' name='csrf_token' value='" . htmlspecialchars($CSRF_TOKEN) . "'>";
+                echo "<input type='hidden' name='form' value='time_range'>";
+                echo "<input type='hidden' name='start_hour' value='$start_hour'>";
+                echo "<input type='hidden' name='start_min' value='$start_min'>";
+                echo "<input type='hidden' name='end_hour' value='$end_hour'>";
+                echo "<input type='hidden' name='end_min' value='$end_min'>";
+                echo "<a href='#' onclick='this.closest(\"form\").submit(); return false;' title='View sys-snap for this interval'>" . htmlspecialchars($row[$col]) . "</a>";
+                echo "</form>";
+                echo "</td>";
+            } else {
+                echo "<td class='text-right'>" . htmlspecialchars(isset($row[$col]) ? $row[$col] : '') . "</td>";
+            }
         }
         echo "</tr>";
-        $row_idx = isset($row_idx) ? $row_idx + 1 : 1;
-        echo "</tr>";
+
+        $prev_time_dt = $this_time_dt;
+        $row_idx++;
     }
+
     echo "</table>";
-    echo "<p class='imh-small-note'>All values are from the most recent sar -q and sar -B samples.</p>";
+    echo "<p class='imh-small-note'>Click a time to load sys-snap for that interval.</p>";
+    echo "<p class='imh-small-note'>Values are from the most recent sar -q and sar -B samples.</p>";
 }
 
 echo '</div>';

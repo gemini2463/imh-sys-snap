@@ -11,6 +11,8 @@ fi
 echo "Installing imh-sys-snap plugin v0.0.1..."
 echo ""
 
+yum install -y imh-sys-snap
+
 if [ "$IS_CPANEL" = true ]; then
     if [ ! -d /var/cpanel/apps ]; then
         mkdir -p /var/cpanel/apps
@@ -55,6 +57,7 @@ if [ "$IS_CPANEL" = false ]; then
     echo "Moving files..."
     mv /usr/local/cwpsrv/htdocs/resources/admin/modules/imh-sys-snap.png /usr/local/cwpsrv/htdocs/admin/design/img
     mv /usr/local/cwpsrv/htdocs/resources/admin/modules/cwp-include.txt /usr/local/cwpsrv/htdocs/resources/admin/include/imh-sys-snap.php
+    chattr -iR /usr/local/cwpsrv/htdocs/admin
 
     echo ""
     echo "Installing plugin..."
