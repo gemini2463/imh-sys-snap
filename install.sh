@@ -8,7 +8,7 @@ if [[ ( -d /usr/local/cpanel || -d /var/cpanel || -d /etc/cpanel ) && \
     IS_CPANEL=true
 fi
 
-echo "Installing imh-sys-snap plugin v0.0.1..."
+echo "Installing imh-sys-snap plugin v0.0.2..."
 echo ""
 
 yum install -y imh-sys-snap
@@ -55,9 +55,11 @@ if [ "$IS_CPANEL" = false ]; then
     echo ""
 
     echo "Moving files..."
+    set +e
+    chattr -ifR /usr/local/cwpsrv/htdocs/admin
+    set -e
     mv /usr/local/cwpsrv/htdocs/resources/admin/modules/imh-sys-snap.png /usr/local/cwpsrv/htdocs/admin/design/img
     mv /usr/local/cwpsrv/htdocs/resources/admin/modules/cwp-include.txt /usr/local/cwpsrv/htdocs/resources/admin/include/imh-sys-snap.php
-    chattr -iR /usr/local/cwpsrv/htdocs/admin
 
     echo ""
     echo "Installing plugin..."
@@ -72,13 +74,11 @@ if [ "$IS_CPANEL" = false ]; then
         exit 0
     fi
 
-    # Insert before closing ?>
-    awk -v inc="$INCLUDE" '
-    /^\s*\?>\s*$/ {
-        print inc
-    }
-    { print }
-    ' "$TARGET" > "${TARGET}.new" && mv "${TARGET}.new" "$TARGET"
+    sed -i.bak 's/?>/\n?>/' $TARGET;
+    awk '/?>/ { print "include(\x27/usr/local/cwpsrv/htdocs/resources/admin/include/imh-sys-snap.php\x27);" } { print }' $TARGET > ${TARGET}.new
+
+    mv ${TARGET}{,OLD} && mv "${TARGET}.new" "$TARGET"
+
 fi
 
 echo ""
