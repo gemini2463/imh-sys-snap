@@ -12,7 +12,7 @@
  *
  * Author: Ross Uber
  * Maintainer: InMotion Hosting
- * Version: 0.0.4
+ * Version: 0.0.5
  */
 
 
@@ -325,6 +325,25 @@ echo '<style>
     display: block;
 }
 
+.imh-collapsible-content {
+    max-height: 1000px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+.imh-collapsible-content[aria-hidden="true"] {
+    max-height: 0;
+}
+.imh-toggle-btn {
+    background: #eee;
+    border: 1px solid #999;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 0.5em;
+    padding: 2px 10px;
+    font-family: monospace;
+    font-size: larger;
+}
+
 </style>';
 
 
@@ -365,6 +384,30 @@ document.querySelectorAll('#imh-tabs-nav button').forEach(function(btn) {
         btn.classList.add('active');
         var tabId = btn.getAttribute('data-tab');
         document.getElementById(tabId).classList.add('active');
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.imh-toggle-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var targetId = btn.getAttribute('data-target');
+            var collapsed = btn.getAttribute('data-collapsed') === '1';
+            var content = document.getElementById(targetId);
+
+            if (collapsed) {
+                // Expand
+                content.setAttribute('aria-hidden', 'false');
+                btn.innerText = '[–]';
+                btn.setAttribute('data-collapsed', '0');
+                btn.setAttribute('aria-expanded', 'true');
+            } else {
+                // Collapse
+                content.setAttribute('aria-hidden', 'true');
+                btn.innerText = '[+]';
+                btn.setAttribute('data-collapsed', '1');
+                btn.setAttribute('aria-expanded', 'false');
+            }
+        });
     });
 });
 </script>";
@@ -639,8 +682,22 @@ echo '</div>';
 echo '<div class="imh-spacer imh-monospace">';
 foreach ($data as $user => $vals) {
     $anchor = 'user-' . rawurlencode($user);
-    echo "<div id='$anchor' class='imh-spacer imh-monospace imh-user-section'>
-    <h2>User: <span class='imh-user-name'>" . htmlspecialchars($user) . "</span></h2>";
+
+    // Unique ID for JS target
+    $collapse_id = 'user-details-' . md5($user);
+
+    echo "<div id='$anchor' class='imh-spacer imh-monospace imh-user-section'>";
+    echo "<h2 style='display:inline-block;'>User: <span class='imh-user-name'>" . htmlspecialchars($user) . "</span></h2>";
+
+
+    // Use data attributes for the toggle target and state
+    echo " <button class='imh-toggle-btn' data-target='$collapse_id' data-collapsed='0' aria-expanded='true' style='margin-left:1em;font-size:1em;vertical-align:middle;'>[–]</button>";
+
+
+    // Collapsible content container
+
+    echo "<div id='$collapse_id' class='imh-collapsible-content'>";
+
 
     // CPU
     echo "<h3>CPU Score: " . htmlspecialchars($vals['cpu-score']) . "</h3><br/>";
@@ -674,8 +731,12 @@ foreach ($data as $user => $vals) {
         echo "<td>" . htmlspecialchars($row['proc']) . "</td>";
         echo "</tr>";
     }
-    echo "</table>
-    </div>";
+    echo "</table>";
+
+    // End collapsible
+    echo "</div>";
+
+    echo "</div>";
 }
 echo "</div>";
 
