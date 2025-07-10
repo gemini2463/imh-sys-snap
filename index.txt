@@ -12,7 +12,7 @@
  *
  * Author: Ross Uber
  * Maintainer: InMotion Hosting
- * Version: 0.0.2
+ * Version: 0.0.4
  */
 
 
@@ -701,332 +701,309 @@ echo "</div>";
 // 6. 24-hour Statistics Tab
 // ==========================
 
-function getSarQData()
+class SarDataProcessor
 {
-    $shortName = exec('date +%Z');
-    $longName = timezone_name_from_abbr($shortName);
-    if ($longName) {
-        date_default_timezone_set($longName);
-    }
-
-    $now = time(); // current unix time
-    $today = date('d', $now); // day-of-month
-    $yesterday = date('d', strtotime('yesterday', $now));
-    $cur_time = date('H:i:s', $now); // current time in 24h
-
-    $cmd1 = "LANG=C sar -q -f /var/log/sa/sa$yesterday -s $cur_time";
-    $cmd2 = "LANG=C sar -q -f /var/log/sa/sa$today -e $cur_time";
-    $out1 = shell_exec($cmd1);
-    $out2 = shell_exec($cmd2);
-
-    // Merge two arrays of lines
-    function merge_sar($out1, $out2)
+    private const SAR_LOG_PATHS = [
+        '/var/log/sa/sa',      // Standard location
+        '/var/log/sysstat/sa'  // Alternative location
+    ];
+    private const DEFAULT_Q_HEADER = ['Time', 'runq-sz', 'plist-sz', 'ldavg-1', 'ldavg-5', 'ldavg-15', 'blocked'];
+    private const DEFAULT_B_HEADER = ['Time', 'pgpgin/s', 'pgpgout/s', 'fault/s', 'majflt/s', 'pgfree/s', 'pgscank/s', 'pgscand/s', 'pgsteal/s', '%vmeff'];
+    private const B_COLUMNS_TO_MERGE = ['pgpgin/s', 'pgpgout/s', 'fault/s', 'majflt/s'];
+    private $sarLogPath;
+    private $currentTime;
+    private $today;
+    private $yesterday;
+    public function __construct()
     {
-        $lines1 = array_filter(array_map('trim', explode("\n", $out1)));
-        $lines2 = array_filter(array_map('trim', explode("\n", $out2)));
-        // Remove headers from lines2
-        foreach ($lines2 as $k => $v) {
-            if (strpos($v, 'runq-sz') !== false) {
-                unset($lines2[$k]);
+        $this->initializeTimezone();
+        $this->initializeDates();
+    }
+    public function getSarData(): array
+    {
+        $sarQData = $this->getSarQData();
+        if (!$sarQData['data']) {
+            return ['success' => false, 'error' => 'Could not get sar -q data'];
+        }
+        $sarBData = $this->getSarBData();
+        $mergedData = $this->mergeSarData($sarQData['data'], $sarBData['data']);
+        $finalHeader = $this->createFinalHeader($sarQData['header']);
+        return [
+            'success' => true,
+            'header' => $finalHeader,
+            'data' => $mergedData
+        ];
+    }
+    private function initializeTimezone(): void
+    {
+        $shortName = exec('date +%Z');
+        $longName = timezone_name_from_abbr($shortName);
+        if ($longName) {
+            date_default_timezone_set($longName);
+        }
+    }
+    private function initializeDates(): void
+    {
+        $now = time();
+        $this->currentTime = date('H:i:s', $now);
+        $this->today = date('d', $now);
+        $this->yesterday = date('d', strtotime('yesterday', $now));
+    }
+    private function getSarQData(): array
+    {
+        $output = $this->executeSarCommands('-q');
+        $lines = $this->mergeAndFilterLines($output, 'runq-sz');
+        $header = $this->extractHeader($lines, '/runq-sz\s+plist-sz\s+ldavg-1\s+ldavg-5\s+ldavg-15\s+blocked/', self::DEFAULT_Q_HEADER);
+        $data = $this->parseDataLines($lines, $header);
+        return ['header' => $header, 'data' => $data];
+    }
+    private function getSarBData(): array
+    {
+        $output = $this->executeSarCommands('-B');
+        $lines = $this->mergeAndFilterLines($output, 'pgpgin/s');
+        $header = $this->extractHeader($lines, '/pgpgin\/s\s+pgpgout\/s\s+fault\/s\s+majflt\/s/', self::DEFAULT_B_HEADER);
+        $data = $this->parseDataLines($lines, $header);
+        return ['header' => $header, 'data' => $data];
+    }
+    private function determineSarLogPath(): void
+    {
+        foreach (self::SAR_LOG_PATHS as $path) {
+            // Check if yesterday's log file exists at this path
+            if (file_exists($path . $this->yesterday) || file_exists($path . $this->today)) {
+                $this->sarLogPath = $path;
+                return;
             }
         }
-        return array_merge($lines1, $lines2);
+
+        // Default to standard location if no files found
+        $this->sarLogPath = self::SAR_LOG_PATHS[0];
     }
+    private function executeSarCommands(string $option): array
+    {
+        $cmd1 = "LANG=C sar {$option} -f " . $this->sarLogPath . "{$this->yesterday} -s {$this->currentTime}";
+        $cmd2 = "LANG=C sar {$option} -f " . $this->sarLogPath . "{$this->today} -e {$this->currentTime}";
+        return [
+            shell_exec($cmd1) ?: '',
+            shell_exec($cmd2) ?: ''
+        ];
+    }
+    private function mergeAndFilterLines(array $outputs, string $headerPattern): array
+    {
+        $allLines = [];
 
-    $all_lines = merge_sar($out1, $out2);
+        foreach ($outputs as $index => $output) {
+            $lines = array_filter(array_map('trim', explode("\n", $output)));
 
-    // Find the header BEFORE filtering
-    $header = null;
-    foreach ($all_lines as $idx => $line) {
-        if (preg_match('/runq-sz\s+plist-sz\s+ldavg-1\s+ldavg-5\s+ldavg-15\s+blocked/', $line)) {
-            $temp_header = preg_split('/\s+/', trim($line));
-            $header = array_merge(['Time'], array_slice($temp_header, 1)); // Prepend "Time"
-            break;
+            // Remove headers from second output
+            if ($index > 0) {
+                $lines = array_filter($lines, function ($line) use ($headerPattern) {
+                    return strpos($line, $headerPattern) === false;
+                });
+            }
+
+            $allLines = array_merge($allLines, $lines);
         }
+        return $this->filterDataLines($allLines);
     }
-
-    if (!$header) {
-        // Fallback: hard-code for sar -q
-        $header = ['Time', 'runq-sz', 'plist-sz', 'ldavg-1', 'ldavg-5', 'ldavg-15', 'blocked'];
+    private function filterDataLines(array $lines): array
+    {
+        return array_filter($lines, function ($line) {
+            $trimmed = trim($line);
+            return $trimmed
+                && strpos($trimmed, 'Average:') !== 0
+                && strpos($trimmed, 'Linux') !== 0
+                && !preg_match('/runq-sz\s+plist-sz\s+ldavg-1/', $trimmed)
+                && !preg_match('/pgpgin\/s\s+pgpgout\/s\s+fault\/s/', $trimmed);
+        });
     }
+    private function extractHeader(array $lines, string $pattern, array $defaultHeader): array
+    {
+        foreach ($lines as $line) {
+            if (preg_match($pattern, $line)) {
+                $headerParts = preg_split('/\s+/', trim($line));
+                return array_merge(['Time'], array_slice($headerParts, 1));
+            }
+        }
 
-    // Now filter out junk/headers
-    function filter_sar_data_lines($lines)
+        return $defaultHeader;
+    }
+    private function parseDataLines(array $lines, array $header): array
     {
         $data = [];
+
         foreach ($lines as $line) {
-            $trim = trim($line);
-            if (
-                !$trim
-                || strpos($trim, 'Average:') === 0
-                || strpos($trim, 'Linux') === 0
-                || preg_match('/runq-sz\s+plist-sz\s+ldavg-1/', $trim)
-            ) {
+            $row = preg_split('/\s+/', trim($line));
+
+            if (count($row) < count($header)) {
                 continue;
             }
-            $data[] = $trim;
-        }
-        return $data;
-    }
+            $time = $row[0];
+            $values = array_slice($row, 1, count($header) - 1);
 
-    $all_lines_filtered = filter_sar_data_lines($all_lines);
-
-    if (!$all_lines_filtered) return false;
-
-    // Now $all_lines_filtered are just data rows
-    $lines = $all_lines_filtered;
-
-    $data = [];
-    foreach ($lines as $line) {
-        $row = preg_split('/\s+/', $line);
-        if (empty($row) || count($row) < count($header)) continue;
-        // (Optional: handle AM/PM time formats if needed)
-        $time = $row[0];
-        $rest = array_slice($row, 1, count($header) - 1);
-        if (count($rest) == count($header) - 1) {
-            $data[] = array_combine($header, array_merge([$time], $rest));
-        }
-    }
-    return [$header, $data];
-}
-
-
-
-
-
-
-// Secondary function to get sar -B data
-
-function getSarBData($cur_time, $yesterday, $today)
-{
-    $cmd1 = "LANG=C sar -B -f /var/log/sa/sa$yesterday -s $cur_time";
-    $cmd2 = "LANG=C sar -B -f /var/log/sa/sa$today -e $cur_time";
-    $out1 = shell_exec($cmd1);
-    $out2 = shell_exec($cmd2);
-
-    // Merge and filter lines
-    function merge_b($out1, $out2)
-    {
-        $lines1 = array_filter(array_map('trim', explode("\n", $out1)));
-        $lines2 = array_filter(array_map('trim', explode("\n", $out2)));
-        foreach ($lines2 as $k => $v) {
-            if (strpos($v, 'pgpgin/s') !== false) unset($lines2[$k]);
-        }
-        return array_merge($lines1, $lines2);
-    }
-
-    $all_lines = merge_b($out1, $out2);
-
-    // Find header BEFORE filtering
-    $header = null;
-    foreach ($all_lines as $idx => $line) {
-        if (preg_match('/pgpgin\/s\s+pgpgout\/s\s+fault\/s\s+majflt\/s/', $line)) {
-            $header = preg_split('/\s+/', trim($line));
-            array_unshift($header, 'Time');
-            break;
-        }
-    }
-    if (!$header) {
-        $header = ['Time', 'pgpgin/s', 'pgpgout/s', 'fault/s', 'majflt/s', 'pgfree/s', 'pgscank/s', 'pgscand/s', 'pgsteal/s', '%vmeff'];
-    }
-
-    // Filter out junk/headers
-    function filter_b($lines)
-    {
-        $data = [];
-        foreach ($lines as $line) {
-            $trim = trim($line);
-            if (
-                !$trim
-                || strpos($trim, 'Average:') === 0
-                || strpos($trim, 'Linux') === 0
-                || preg_match('/pgpgin\/s\s+pgpgout\/s\s+fault\/s/', $trim)
-            )
-                continue;
-            $data[] = $trim;
-        }
-        return $data;
-    }
-
-    $data_lines = filter_b($all_lines);
-
-    $data = [];
-    foreach ($data_lines as $line) {
-        $row = preg_split('/\s+/', $line);
-        if (count($row) >= count($header) - 1) {
-            // only take first n columns
-            $vals = array_slice($row, 0, count($header) - 1);
-            $data[] = array_combine(array_slice($header, 0, count($header) - 1), $vals);
-        }
-    }
-    return [$header, $data];
-}
-
-
-
-
-
-
-
-// Merge sar -q and sar -B data by time
-
-function mergeSarQandB($sarqData, $sarBData)
-{
-    // Build lookup for sar -B
-    $b_map = [];
-    foreach ($sarBData as $row) {
-        $b_map[$row['Time']] = $row;
-    }
-
-    $merged = [];
-    foreach ($sarqData as $qrow) {
-        $time = $qrow['Time'];
-        $brow = isset($b_map[$time]) ? $b_map[$time] : null;
-        $merged_row = $qrow;
-        if ($brow) {
-            // Only append desired columns, e.g. pgpgin/s, pgpgout/s, fault/s, majflt/s
-            foreach (['pgpgin/s', 'pgpgout/s', 'fault/s', 'majflt/s'] as $col) {
-                $merged_row[$col] = $brow[$col];
-            }
-        } else {
-            // No B data for this time
-            foreach (['pgpgin/s', 'pgpgout/s', 'fault/s', 'majflt/s'] as $col) {
-                $merged_row[$col] = '';
+            if (count($values) === count($header) - 1) {
+                $data[] = array_combine($header, array_merge([$time], $values));
             }
         }
-        $merged[] = $merged_row;
+
+        return $data;
     }
-    return $merged;
-}
-
-
-
-
-
-// Explanation block for the 24 Hour Statistics tab
-
-echo '<div id="tab-loadavg" class="tab-content">';
-echo "<div class='imh-box--narrow'><p><code>sar</code> collects, reports and saves system activity information (<a href='https://github.com/sysstat/sysstat' target='_blank'>sysstat</a>)</p>";
-echo "<h2>Queue length and load average statistics (<code>sar -q</code>)</h2>";
-echo "<p>
-<strong>runq-sz</strong> - Number of processes waiting for run time (run queue size)<br/>
-<strong>plist-sz</strong> - Number of processes in the process list<br/>
-<strong>ldavg-1</strong> - System load average for the last 1 minute<br/>
-<strong>ldavg-5</strong> - System load average for the last 5 minutes<br/>
-<strong>ldavg-15</strong> - System load average for the last 15 minutes<br/>
-<strong>blocked</strong> - Number of processes currently blocked, waiting for I/O<br/>
-<h2>Paging statistics (<code>sar -B</code>)</h2><p>
-<strong>pgpgin/s</strong> - Kilobytes paged in from disk per second<br/>
-<strong>pgpgout/s</strong> - Kilobytes paged out to disk per second<br/>
-<strong>fault/s</strong> - Number of page faults per second<br/>
-<strong>majflt/s</strong> - Number of major page faults per second (requiring disk access)
-</p>";
-echo "</div>";
-
-
-
-
-
-
-
-
-// Get sar -q and sar -B data
-
-function parse_sar_time($timestr)
-{
-    // supports "01:10:01 AM" or "13:10:01"
-    $fmt = (stripos($timestr, 'AM') !== false || stripos($timestr, 'PM') !== false) ? 'h:i:s A' : 'H:i:s';
-    $dt = DateTime::createFromFormat($fmt, $timestr);
-    if (!$dt) return false;
-    return $dt;
-}
-
-list($header_q, $sarq) = getSarQData();
-$row_idx = 0;
-
-if (!$sarq) {
-    echo "<div class='imh-alert'>Could not get sar -q data.</div>";
-} else {
-    // Prepare for sar -B
-    $now = time();
-    $today = date('d', $now);
-    $yesterday = date('d', strtotime('yesterday', $now));
-    $cur_time = date('H:i:s', $now);
-
-    list($header_b, $sarb) = getSarBData($cur_time, $yesterday, $today);
-
-    // Merge by time
-    $merged = mergeSarQandB($sarq, $sarb);
-
-    // New header
-    $final_header = array_merge($header_q, array_diff(['pgpgin/s', 'pgpgout/s', 'fault/s', 'majflt/s'], $header_q));
-
-    // Output table
-    echo "<table class='sys-snap-tables'>";
-    echo "<thead>";
-    foreach ($final_header as $col) {
-        echo "<th>" . htmlspecialchars($col) . "</th>";
-    }
-    echo "</thead>";
-
-    $prev_time_dt = null;
-    $row_idx = 0;
-    foreach ($merged as $i => $row) {
-        $this_time_str = $row['Time'];
-        $this_time_dt = parse_sar_time($this_time_str);
-        if (!$this_time_dt) {
-            // fallback: skip
-            continue;
+    private function mergeSarData(array $sarQData, array $sarBData): array
+    {
+        $bDataMap = [];
+        foreach ($sarBData as $row) {
+            $bDataMap[$row['Time']] = $row;
         }
+        $merged = [];
+        foreach ($sarQData as $qRow) {
+            $time = $qRow['Time'];
+            $mergedRow = $qRow;
 
-        // Calculate interval
-        if ($prev_time_dt) {
-            $start_dt = $prev_time_dt;
-            $end_dt = $this_time_dt;
-        } else {
-            // First row: interval is [this_time, this_time+1min]
-            $start_dt = clone $this_time_dt;
-            $end_dt = clone $this_time_dt;
-            $end_dt->modify('+1 minute');
-        }
-        // For POST params
-        $start_hour = (int)$start_dt->format('H');
-        $start_min  = (int)$start_dt->format('i');
-        $end_hour   = (int)$end_dt->format('H');
-        $end_min    = (int)$end_dt->format('i');
-
-        $row_class = ($row_idx % 2 === 1) ? " class='imh-table-alt'" : "";
-        echo "<tr$row_class>";
-
-        foreach ($final_header as $colidx => $col) {
-            if ($colidx === 0) {
-                // First column ("Time") - clickable link wrapped in POST form
-                echo "<td class='text-right'>";
-                echo "<form method='post' style='display:inline;' class='sar-time-link-form'>";
-                echo "<input type='hidden' name='csrf_token' value='" . htmlspecialchars($CSRF_TOKEN) . "'>";
-                echo "<input type='hidden' name='form' value='time_range'>";
-                echo "<input type='hidden' name='start_hour' value='$start_hour'>";
-                echo "<input type='hidden' name='start_min' value='$start_min'>";
-                echo "<input type='hidden' name='end_hour' value='$end_hour'>";
-                echo "<input type='hidden' name='end_min' value='$end_min'>";
-                echo "<a href='#' onclick='this.closest(\"form\").submit(); return false;' title='View sys-snap for this interval'>" . htmlspecialchars($row[$col]) . "</a>";
-                echo "</form>";
-                echo "</td>";
+            if (isset($bDataMap[$time])) {
+                foreach (self::B_COLUMNS_TO_MERGE as $column) {
+                    $mergedRow[$column] = $bDataMap[$time][$column] ?? '';
+                }
             } else {
-                echo "<td class='text-right'>" . htmlspecialchars(isset($row[$col]) ? $row[$col] : '') . "</td>";
+                foreach (self::B_COLUMNS_TO_MERGE as $column) {
+                    $mergedRow[$column] = '';
+                }
             }
+
+            $merged[] = $mergedRow;
         }
-        echo "</tr>";
 
-        $prev_time_dt = $this_time_dt;
-        $row_idx++;
+        return $merged;
     }
-
-    echo "</table>";
-    echo "<p class='imh-small-note'>Click a time to load sys-snap for that interval.</p>";
-    echo "<p class='imh-small-note'>Values are from the most recent sar -q and sar -B samples.</p>";
+    private function createFinalHeader(array $qHeader): array
+    {
+        return array_merge($qHeader, array_diff(self::B_COLUMNS_TO_MERGE, $qHeader));
+    }
 }
+class SarTableRenderer
+{
+    private $csrfToken;
+    public function __construct(string $csrfToken)
+    {
+        $this->csrfToken = $csrfToken;
+    }
+    public function render(array $sarData): string
+    {
+        if (!$sarData['success']) {
+            return "<div class='imh-alert'>{$sarData['error']}</div>";
+        }
+        $output = $this->renderExplanation();
+        $output .= $this->renderTable($sarData['header'], $sarData['data']);
+        $output .= $this->renderFooterNotes();
+        return $output;
+    }
+    private function renderExplanation(): string
+    {
+        return "
+        <div class='imh-box--narrow'>
+            <p><code>sar</code> collects, reports and saves system activity information (<a href='https://github.com/sysstat/sysstat' target='_blank'>sysstat</a>)</p>
+            <h2>Queue length and load average statistics (<code>sar -q</code>)</h2>
+            <p>
+                <strong>runq-sz</strong> - Number of processes waiting for run time (run queue size)<br/>
+                <strong>plist-sz</strong> - Number of processes in the process list<br/>
+                <strong>ldavg-1</strong> - System load average for the last 1 minute<br/>
+                <strong>ldavg-5</strong> - System load average for the last 5 minutes<br/>
+                <strong>ldavg-15</strong> - System load average for the last 15 minutes<br/>
+                <strong>blocked</strong> - Number of processes currently blocked, waiting for I/O<br/>
+            </p>
+            <h2>Paging statistics (<code>sar -B</code>)</h2>
+            <p>
+                <strong>pgpgin/s</strong> - Kilobytes paged in from disk per second<br/>
+                <strong>pgpgout/s</strong> - Kilobytes paged out to disk per second<br/>
+                <strong>fault/s</strong> - Number of page faults per second<br/>
+                <strong>majflt/s</strong> - Number of major page faults per second (requiring disk access)
+            </p>
+        </div>";
+    }
+    private function renderTable(array $header, array $data): string
+    {
+        $output = "<table class='sys-snap-tables'><thead>";
 
+        foreach ($header as $column) {
+            $output .= "<th>" . htmlspecialchars($column) . "</th>";
+        }
+
+        $output .= "</thead><tbody>";
+        $previousTime = null;
+        foreach ($data as $index => $row) {
+            $timeInterval = $this->calculateTimeInterval($row['Time'], $previousTime);
+            $rowClass = ($index % 2 === 1) ? " class='imh-table-alt'" : "";
+
+            $output .= "<tr{$rowClass}>";
+
+            foreach ($header as $columnIndex => $column) {
+                if ($columnIndex === 0) {
+                    $output .= $this->renderTimeCell($row[$column], $timeInterval);
+                } else {
+                    $output .= "<td class='text-right'>" . htmlspecialchars($row[$column] ?? '') . "</td>";
+                }
+            }
+
+            $output .= "</tr>";
+            $previousTime = $this->parseTime($row['Time']);
+        }
+        return $output . "</tbody></table>";
+    }
+    private function calculateTimeInterval(string $currentTimeStr, ?DateTime $previousTime): array
+    {
+        $currentTime = $this->parseTime($currentTimeStr);
+        if (!$currentTime) {
+            return ['start_hour' => 0, 'start_min' => 0, 'end_hour' => 0, 'end_min' => 0];
+        }
+        if ($previousTime) {
+            $startTime = $previousTime;
+            $endTime = $currentTime;
+        } else {
+            $startTime = clone $currentTime;
+            $endTime = clone $currentTime;
+            $endTime->modify('+1 minute');
+        }
+        return [
+            'start_hour' => (int)$startTime->format('H'),
+            'start_min' => (int)$startTime->format('i'),
+            'end_hour' => (int)$endTime->format('H'),
+            'end_min' => (int)$endTime->format('i')
+        ];
+    }
+    private function parseTime(string $timeStr): ?DateTime
+    {
+        $format = (stripos($timeStr, 'AM') !== false || stripos($timeStr, 'PM') !== false)
+            ? 'h:i:s A'
+            : 'H:i:s';
+
+        return DateTime::createFromFormat($format, $timeStr) ?: null;
+    }
+    private function renderTimeCell(string $time, array $interval): string
+    {
+        return "
+        <td class='text-right'>
+            <form method='post' style='display:inline;' class='sar-time-link-form'>
+                <input type='hidden' name='csrf_token' value='" . htmlspecialchars($this->csrfToken) . "'>
+                <input type='hidden' name='form' value='time_range'>
+                <input type='hidden' name='start_hour' value='{$interval['start_hour']}'>
+                <input type='hidden' name='start_min' value='{$interval['start_min']}'>
+                <input type='hidden' name='end_hour' value='{$interval['end_hour']}'>
+                <input type='hidden' name='end_min' value='{$interval['end_min']}'>
+                <a href='#' onclick='this.closest(\"form\").submit(); return false;' title='View sys-snap for this interval'>" . htmlspecialchars($time) . "</a>
+            </form>
+        </td>";
+    }
+    private function renderFooterNotes(): string
+    {
+        return "
+        <p class='imh-small-note'>Click a time to load sys-snap for that interval.</p>
+        <p class='imh-small-note'>Values are from the most recent sar -q and sar -B samples.</p>";
+    }
+}
+// Usage
+echo '<div id="tab-loadavg" class="tab-content">';
+$processor = new SarDataProcessor();
+$renderer = new SarTableRenderer($CSRF_TOKEN);
+$sarData = $processor->getSarData();
+echo $renderer->render($sarData);
 echo '</div>';
 
 

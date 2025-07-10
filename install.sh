@@ -8,7 +8,7 @@ if [[ ( -d /usr/local/cpanel || -d /var/cpanel || -d /etc/cpanel ) && \
     IS_CPANEL=true
 fi
 
-echo "Installing imh-sys-snap plugin v0.0.2..."
+echo "Installing imh-sys-snap plugin v0.0.4..."
 echo ""
 
 yum install -y imh-sys-snap
