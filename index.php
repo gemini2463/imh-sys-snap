@@ -12,7 +12,7 @@
  *
  * Author: Ross Uber
  * Maintainer: InMotion Hosting
- * Version: 0.0.5
+ * Version: 0.0.6
  */
 
 
@@ -72,14 +72,14 @@ if (!isset($_SESSION['csrf_token'])) {
     $CSRF_TOKEN = $_SESSION['csrf_token'];
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['csrf_token'])) {
-    die("CSRF token missing");
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (
+        !isset($_POST['csrf_token'], $_SESSION['csrf_token']) ||
+        !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])
+    ) {
+        exit("Invalid CSRF token");
+    }
 }
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['csrf_token']) || !isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token']))) {
-    die("Invalid CSRF token");
-}
-
 
 
 
@@ -88,10 +88,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (!isset($_POST['csrf_token']) || !i
 
 // Defaults and validation
 
-$start_hour = isset($_POST['start_hour']) ? (int)$_POST['start_hour'] : 0;
-$start_min  = isset($_POST['start_min'])  ? (int)$_POST['start_min']  : 0;
-$end_hour   = isset($_POST['end_hour'])   ? (int)$_POST['end_hour']   : 23;
-$end_min    = isset($_POST['end_min'])    ? (int)$_POST['end_min']    : 59;
+$start_hour = min(23, max(0, (int)($_POST['start_hour'] ?? 0)));
+$start_min  = min(59, max(0, (int)($_POST['start_min'] ?? 0)));
+$end_hour   = min(23, max(0, (int)($_POST['end_hour'] ?? 23)));
+$end_min    = min(59, max(0, (int)($_POST['end_min'] ?? 59)));
 
 
 
@@ -135,6 +135,23 @@ if ($isCPanelServer) {
 // Styles for the tabs and buttons
 
 echo '<style>
+.panel-body a,
+.imh-box a,
+.imh-footer-box a,
+.imh-box--narrow a {
+  text-decoration: underline;
+}
+.panel-body a:hover,
+.imh-box a:hover,
+.imh-footer-box a:hover,
+.imh-box--narrow a:hover,
+.panel-body a:focus,
+.imh-box a:focus,
+.imh-footer-box a:focus,
+.imh-box--narrow a:focus {
+  text-decoration: none;
+}
+
 .imh-btn {
   margin-left: 15px;
   padding: 5px 15px;
@@ -142,10 +159,11 @@ echo '<style>
 }
 
 .imh-title {
-  margin: 2em 0 2em 0;
+  margin: 0.25em 0 1em 0;
 }
+
 .imh-title-img {
-  margin-right: 1em;
+  margin-right: 0.5em;
 }
 
 .sys-snap-tables {
@@ -326,13 +344,15 @@ echo '<style>
 }
 
 .imh-collapsible-content {
-    max-height: 1000px;
+    max-height: 33333px;
     overflow: hidden;
     transition: max-height 0.3s ease;
 }
+
 .imh-collapsible-content[aria-hidden="true"] {
     max-height: 0;
 }
+
 .imh-toggle-btn {
     background: #eee;
     border: 1px solid #999;
@@ -344,6 +364,15 @@ echo '<style>
     font-size: larger;
 }
 
+.imh-toggle-btn:hover {
+    background: #ddd;
+    font-weight: bold;
+    color: #333;
+}
+
+.imh-larger-text {
+    font-size: 1.5em;
+}
 </style>';
 
 
@@ -466,7 +495,7 @@ function formatElapsedTime($seconds)
     return implode(', ', $out);
 }
 
-echo "<div class='imh-box imh-box.margin-bottom'><p><a target='_blank' href='https://github.com/CpanelInc/tech-SysSnapv2'>sys-snap</a> logs CPU and memory usage on a rolling 24-hour cycle, every minute.</p>";
+echo "<div class='imh-box imh-box.margin-bottom'><p class='imh-larger-text'><a target='_blank' href='https://github.com/CpanelInc/tech-SysSnapv2'>sys-snap</a> logs CPU and memory usage on a rolling 24-hour cycle, every minute.</p>";
 
 // Status box
 
@@ -512,7 +541,7 @@ if ($action_output) {
         . htmlspecialchars($action_output) . "</pre>";
 }
 
-echo "<br/><p>Review the <code>24 Hour Statistics</code> to identify time ranges of interest.</p><br/>";
+echo "<p>Review the <code>24 Hour Statistics</code> to identify time ranges of interest.</p><br/>";
 
 echo "<p><strong>CPU Score</strong>: 1 = 1% of a CPU<br/>
 <strong>Memory Score</strong>: 1 = 1% of total memory</p>";
@@ -562,16 +591,21 @@ echo '<h2 class="imh-spacer">Scores from ' . sprintf('%02d:%02d', $start_hour, $
 
 $sys_snap_cmd = sprintf(
     '/usr/bin/perl /opt/imh-sys-snap/bin/sys-snap.pl --print %d:%02d %d:%02d -v 2>&1',
-    (int)$start_hour,
-    (int)$start_min,
-    (int)$end_hour,
-    (int)$end_min
-);
+    $start_hour,
+    $start_min,
+    $end_hour,
+    $end_min
+); // User values are already validated and cast to int above.
 $output = shell_exec($sys_snap_cmd);
 
 if (!$output) {
     echo "<div class='alert alert-danger imh-spacer imh-alert'>Could not get output from sys-snap.<br/>Check if the script is running and accessible.</div>";
-    WHM::footer();
+
+    if ($isCPanelServer) {
+        WHM::footer();
+    } else {
+        echo '</div>'; // Close panel-body
+    }
     exit;
 }
 
@@ -646,6 +680,12 @@ function parseSysSnap($text)
 
 // Display sys-snap data
 
+function cleanProcName($proc)
+{
+    // Remove all leading "tree" decorations (like "| ", "\_ ", any whitespace), possibly repeated.
+    return preg_replace('/^[\|\s\\\\\_]+/', '', $proc);
+}
+
 $data = parseSysSnap($output);
 
 // --- User Summary Table ---
@@ -700,7 +740,7 @@ foreach ($data as $user => $vals) {
 
 
     // CPU
-    echo "<h3>CPU Score: " . htmlspecialchars($vals['cpu-score']) . "</h3><br/>";
+    echo "<h3>CPU Score: " . htmlspecialchars($vals['cpu-score']) . "</h3>";
     echo "<table class='sys-snap-tables'>";
     echo "<thead><th>CPU</th><th>Process</th></thead>";
 
@@ -711,13 +751,13 @@ foreach ($data as $user => $vals) {
         echo "<tr$cpu_row_class>";
         $cpu_row_idx++;
         echo "<td class='text-right'>" . htmlspecialchars($row['score']) . "</td>";
-        echo "<td>" . htmlspecialchars($row['proc']) . "</td>";
+        echo "<td>" . htmlspecialchars(cleanProcName($row['proc'])) . "</td>";
         echo "</tr>";
     }
     echo "</table>";
 
     // Memory
-    echo "<br/><h3>Memory Score: " . htmlspecialchars($vals['memory-score']) . "</h3><br/>";
+    echo "<h3>Memory Score: " . htmlspecialchars($vals['memory-score']) . "</h3>";
     echo "<table class='sys-snap-tables'>";
     echo "<thead><th>Memory</th><th>Process</th></thead>";
 
@@ -728,7 +768,7 @@ foreach ($data as $user => $vals) {
         echo "<tr$mem_row_class>";
         $mem_row_idx++;
         echo "<td class='text-right'>" . htmlspecialchars($row['score']) . "</td>";
-        echo "<td>" . htmlspecialchars($row['proc']) . "</td>";
+        echo "<td>" . htmlspecialchars(cleanProcName($row['proc'])) . "</td>";
         echo "</tr>";
     }
     echo "</table>";
@@ -960,8 +1000,8 @@ class SarTableRenderer
     {
         return "
         <div class='imh-box--narrow'>
-            <p><code>sar</code> collects, reports and saves system activity information (<a href='https://github.com/sysstat/sysstat' target='_blank'>sysstat</a>)</p>
-            <h2>Queue length and load average statistics (<code>sar -q</code>)</h2>
+            <p class='imh-larger-text imh-box.margin-bottom'><a href='https://github.com/sysstat/sysstat' target='_blank'>sysstat</a> collects, reports and saves system activity information.</p>
+            <h3>Queue length and load average statistics (<code>sar -q</code>)</h3>
             <p>
                 <strong>runq-sz</strong> - Number of processes waiting for run time (run queue size)<br/>
                 <strong>plist-sz</strong> - Number of processes in the process list<br/>
@@ -970,7 +1010,7 @@ class SarTableRenderer
                 <strong>ldavg-15</strong> - System load average for the last 15 minutes<br/>
                 <strong>blocked</strong> - Number of processes currently blocked, waiting for I/O<br/>
             </p>
-            <h2>Paging statistics (<code>sar -B</code>)</h2>
+            <h3>Paging statistics (<code>sar -B</code>)</h3>
             <p>
                 <strong>pgpgin/s</strong> - Kilobytes paged in from disk per second<br/>
                 <strong>pgpgout/s</strong> - Kilobytes paged out to disk per second<br/>
