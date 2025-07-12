@@ -12,7 +12,7 @@
  *
  * Author: Ross Uber
  * Maintainer: InMotion Hosting
- * Version: 0.0.6
+ * Version: 0.0.7
  */
 
 
@@ -33,6 +33,8 @@
 // ==========================
 // 1. Environment Detection
 // ==========================
+
+declare(strict_types=1);
 
 $isCPanelServer = (
     (is_dir('/usr/local/cpanel') || is_dir('/var/cpanel') || is_dir('/etc/cpanel')) && (is_file('/usr/local/cpanel/cpanel') || is_file('/usr/local/cpanel/version'))
@@ -80,6 +82,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit("Invalid CSRF token");
     }
 }
+
+define('IMH_SAR_CACHE_DIR', '/root/tmp/imh-sys-snap');
+
+if (!is_dir(IMH_SAR_CACHE_DIR)) {
+    mkdir(IMH_SAR_CACHE_DIR, 0700, true);
+}
+
+// Clear old cache files
+
+$cache_dir = IMH_SAR_CACHE_DIR;
+$expire_seconds = 3600; // e.g. 1 hour
+
+foreach (glob("$cache_dir/*.cache") as $file) {
+    if (is_file($file) && (time() - filemtime($file) > $expire_seconds)) {
+        unlink($file);
+    }
+}
+
+function imh_safe_cache_filename($tag)
+{
+    return IMH_SAR_CACHE_DIR . '/sar_' . preg_replace('/[^a-zA-Z0-9_\-\.]/', '_', $tag) . '.cache';
+}
+
+/**
+ * Returns the sar sample interval in seconds (default 600).
+ */
+function imh_guess_sar_interval()
+{
+    $cmd = "LANG=C sar -q 2>&1 | grep -E '^[0-9]{2}:[0-9]{2}:[0-9]{2}' | head -2 | awk '{print $1}'";
+    $out = shell_exec($cmd);
+    $lines = array_filter(array_map('trim', explode("\n", $out)));
+    if (count($lines) < 2) return 600; // fallback
+    $t1 = strtotime($lines[0]);
+    $t2 = strtotime($lines[1]);
+    if ($t1 === false || $t2 === false) return 600;
+    $interval = $t2 - $t1;
+    if ($interval > 0 && $interval < 3600) return $interval;
+    return 600;
+}
+
+function imh_cached_shell_exec($tag, $command, $sar_interval)
+{
+    $cache_file = imh_safe_cache_filename($tag);
+
+
+
+    if (file_exists($cache_file)) {
+        if (fileowner($cache_file) !== 0) { // 0 = root
+            unlink($cache_file);
+            // treat as cache miss
+        } else {
+            $mtime = filemtime($cache_file);
+            if (time() - $mtime < $sar_interval) {
+                return file_get_contents($cache_file);
+            }
+        }
+    }
+    $out = shell_exec($command);
+    if (strlen(trim($out))) {
+        file_put_contents($cache_file, $out);
+    }
+    return $out;
+}
+
 
 
 
@@ -138,8 +204,12 @@ echo '<style>
 .panel-body a,
 .imh-box a,
 .imh-footer-box a,
+.imh-box--narrow a,
+.panel-body a,
+.imh-box a,
+.imh-footer-box a,
 .imh-box--narrow a {
-  text-decoration: underline;
+  color:rgb(175, 82, 32);
 }
 .panel-body a:hover,
 .imh-box a:hover,
@@ -149,7 +219,7 @@ echo '<style>
 .imh-box a:focus,
 .imh-footer-box a:focus,
 .imh-box--narrow a:focus {
-  text-decoration: none;
+  color:rgb(124, 70, 41);
 }
 
 .imh-btn {
@@ -215,8 +285,8 @@ echo '<style>
 
 .tabs-nav button.active {
     background: #fff;
-    border-bottom: 2px solid #0077C9;
-    color: #0077C9;
+    border-bottom: 2px solid rgb(175, 82, 32);
+    color: rgb(175, 82, 32);
     font-weight: 600;
 }
 
@@ -565,13 +635,21 @@ echo "<p class='imh-server-time'>" . htmlspecialchars($server_time) . "</p>";
 echo 'Start: <select name="start_hour">';
 for ($i = 0; $i < 24; $i++) echo "<option value='$i'" . ($i == $start_hour ? ' selected' : '') . ">$i</option>";
 echo '</select> : <select name="start_min">';
-for ($i = 0; $i < 60; $i++) echo "<option value='$i'" . ($i == $start_min ? ' selected' : '') . ">" . str_pad($i, 2, '0', STR_PAD_LEFT) . "</option>";
+for ($i = 0; $i < 60; $i++) {
+    echo "<option value='$i'" . ($i == $start_min ? ' selected' : '') . ">" .
+        sprintf("%02d", $i) .
+        "</option>";
+}
 echo '</select>';
 
 echo ' &nbsp; End: <select name="end_hour">';
 for ($i = 0; $i < 24; $i++) echo "<option value='$i'" . ($i == $end_hour ? ' selected' : '') . ">$i</option>";
 echo '</select> : <select name="end_min">';
-for ($i = 0; $i < 60; $i++) echo "<option value='$i'" . ($i == $end_min ? ' selected' : '') . ">" . str_pad($i, 2, '0', STR_PAD_LEFT) . "</option>";
+for ($i = 0; $i < 60; $i++) {
+    echo "<option value='$i'" . ($i == $end_min ? ' selected' : '') . ">" .
+        sprintf("%02d", $i) .
+        "</option>";
+}
 echo '</select>';
 
 echo ' <input type="submit" name="set_time" value="Set Time Range" class="imh-btn">';
@@ -589,16 +667,20 @@ echo '</form>';
 
 echo '<h2 class="imh-spacer">Scores from ' . sprintf('%02d:%02d', $start_hour, $start_min) . ' to ' . sprintf('%02d:%02d', $end_hour, $end_min) . '</h2>';
 
-$sys_snap_cmd = sprintf(
-    '/usr/bin/perl /opt/imh-sys-snap/bin/sys-snap.pl --print %d:%02d %d:%02d -v 2>&1',
-    $start_hour,
-    $start_min,
-    $end_hour,
-    $end_min
-); // User values are already validated and cast to int above.
-$output = shell_exec($sys_snap_cmd);
+$start_time_arg = sprintf('%02d:%02d', $start_hour, $start_min);
+$end_time_arg = sprintf('%02d:%02d', $end_hour, $end_min);
 
-if (!$output) {
+$sys_snap_cmd = '/usr/bin/perl /opt/imh-sys-snap/bin/sys-snap.pl --print ' .
+    escapeshellarg($start_time_arg) . ' ' .
+    escapeshellarg($end_time_arg) . ' -v 2>&1';
+
+$cache_ttl = 60; // seconds
+$cache_tag = "sys_snap_{$start_hour}_{$start_min}_{$end_hour}_{$end_min}";
+$output = imh_cached_shell_exec($cache_tag, $sys_snap_cmd, $cache_ttl);
+
+
+
+if (!$output || $output === null) {
     echo "<div class='alert alert-danger imh-spacer imh-alert'>Could not get output from sys-snap.<br/>Check if the script is running and accessible.</div>";
 
     if ($isCPanelServer) {
@@ -815,11 +897,16 @@ class SarDataProcessor
     private $currentTime;
     private $today;
     private $yesterday;
+    private $sarInterval;
+
     public function __construct()
     {
         $this->initializeTimezone();
         $this->initializeDates();
+        $this->sarInterval = imh_guess_sar_interval();
+        $this->determineSarLogPath();
     }
+
     public function getSarData(): array
     {
         $sarQData = $this->getSarQData();
@@ -835,6 +922,7 @@ class SarDataProcessor
             'data' => $mergedData
         ];
     }
+
     private function initializeTimezone(): void
     {
         $shortName = exec('date +%Z');
@@ -881,13 +969,24 @@ class SarDataProcessor
     }
     private function executeSarCommands(string $option): array
     {
+        // For yesterday: cache for the day
+        $tag1 = 'sar' . preg_replace('/[^a-zA-Z0-9]/', '', $option) . '_yesterday_' . $this->yesterday;
+
+        // For today: cache by "hour" or "quarter hour" to balance freshness and not over-caching
+        $now = time();
+        $hour = date('H', $now);
+        // Optionally, use 10-min intervals to be more granular
+        $ten_min = floor(date('i', $now) / 10) * 10;
+        $tag2 = 'sar' . preg_replace('/[^a-zA-Z0-9]/', '', $option) . '_today_' . $this->today . "_h{$hour}_m{$ten_min}";
+
         $cmd1 = "LANG=C sar {$option} -f " . $this->sarLogPath . "{$this->yesterday} -s {$this->currentTime}";
         $cmd2 = "LANG=C sar {$option} -f " . $this->sarLogPath . "{$this->today} -e {$this->currentTime}";
         return [
-            shell_exec($cmd1) ?: '',
-            shell_exec($cmd2) ?: ''
+            imh_cached_shell_exec($tag1, $cmd1, $this->sarInterval),
+            imh_cached_shell_exec($tag2, $cmd2, $this->sarInterval)
         ];
     }
+
     private function mergeAndFilterLines(array $outputs, string $headerPattern): array
     {
         $allLines = [];
@@ -979,6 +1078,7 @@ class SarDataProcessor
         return array_merge($qHeader, array_diff(self::B_COLUMNS_TO_MERGE, $qHeader));
     }
 }
+
 class SarTableRenderer
 {
     private $csrfToken;

@@ -4,7 +4,7 @@
 set -euo pipefail
 
 # Script metadata
-readonly SCRIPT_VERSION="0.0.6"
+readonly SCRIPT_VERSION="0.0.7"
 readonly SCRIPT_NAME="imh-sys-snap"
 readonly BASE_URL="https://rossu.dev/imh-sys-snap"
 
@@ -15,7 +15,7 @@ readonly YELLOW='\033[1;33m'
 readonly NC='\033[0m' # No Color
 
 # Temporary directory for downloads
-TEMP_DIR=""
+TEMP_DIR="/root/tmp/imh-sys-snap"
 
 # Function to print colored output
 print_message() {
