@@ -4,7 +4,7 @@
 set -euo pipefail
 
 # Script metadata
-readonly SCRIPT_VERSION="0.0.7"
+readonly SCRIPT_VERSION="0.0.8"
 readonly SCRIPT_NAME="imh-sys-snap"
 readonly BASE_URL="https://rossu.dev/imh-sys-snap"
 
@@ -141,12 +141,17 @@ install_cpanel() {
     print_message "$YELLOW" "Downloading files..."
     download_file "$BASE_URL/index.txt" "$TEMP_DIR/index.php"
     download_file "$BASE_URL/imh-sys-snap.conf" "$TEMP_DIR/imh-sys-snap.conf"
+    download_file "$BASE_URL/imh-sys-snap.js" "$TEMP_DIR/imh-sys-snap.js"
     download_file "$BASE_URL/imh-sys-snap.png" "$TEMP_DIR/imh-sys-snap.png"
 
     # Move files to final destination
     print_message "$YELLOW" "Installing files..."
     cp "$TEMP_DIR/index.php" "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME/" || error_exit "Failed to copy index.php"
+
     cp "$TEMP_DIR/imh-sys-snap.conf" "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME/" || error_exit "Failed to copy config"
+
+    cp "$TEMP_DIR/imh-sys-snap.js" "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME/" || error_exit "Failed to copy imh-sys-snap.js"
+
     cp "$TEMP_DIR/imh-sys-snap.png" "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME/" || error_exit "Failed to copy image"
 
     # Set permissions
@@ -181,6 +186,7 @@ install_cwp() {
     download_file "$BASE_URL/index.txt" "$TEMP_DIR/imh-sys-snap.php"
     download_file "$BASE_URL/cwp-include.txt" "$TEMP_DIR/cwp-include.txt"
     download_file "$BASE_URL/imh-sys-snap.png" "$TEMP_DIR/imh-sys-snap.png"
+    download_file "$BASE_URL/imh-sys-snap.js" "$TEMP_DIR/imh-sys-snap.js"
 
     # Remove immutable attributes if they exist
     print_message "$YELLOW" "Preparing directories..."
@@ -195,10 +201,14 @@ install_cwp() {
 
     # Create directories if they don't exist
     create_directory "/usr/local/cwpsrv/htdocs/admin/design/img"
+    create_directory "/usr/local/cwpsrv/htdocs/admin/design/js"
     create_directory "/usr/local/cwpsrv/htdocs/resources/admin/include"
 
     # Move additional files
     cp "$TEMP_DIR/imh-sys-snap.png" "/usr/local/cwpsrv/htdocs/admin/design/img/" || print_message "$YELLOW" "Warning: Failed to copy image"
+
+    cp "$TEMP_DIR/imh-sys-snap.js" "/usr/local/cwpsrv/htdocs/admin/design/js/" || print_message "$YELLOW" "Warning: Failed to copy imh-sys-snap.js"
+
     cp "$TEMP_DIR/cwp-include.txt" "/usr/local/cwpsrv/htdocs/resources/admin/include/imh-sys-snap.php" || error_exit "Failed to copy include file"
 
     # Update 3rdparty.php

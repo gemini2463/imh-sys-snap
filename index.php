@@ -12,7 +12,7 @@
  *
  * Author: Ross Uber
  * Maintainer: InMotion Hosting
- * Version: 0.0.7
+ * Version: 0.0.8
  */
 
 
@@ -200,252 +200,311 @@ if ($isCPanelServer) {
 
 // Styles for the tabs and buttons
 
-echo '<style>
-.panel-body a,
-.imh-box a,
-.imh-footer-box a,
-.imh-box--narrow a,
-.panel-body a,
-.imh-box a,
-.imh-footer-box a,
-.imh-box--narrow a {
-  color:rgb(175, 82, 32);
-}
-.panel-body a:hover,
-.imh-box a:hover,
-.imh-footer-box a:hover,
-.imh-box--narrow a:hover,
-.panel-body a:focus,
-.imh-box a:focus,
-.imh-footer-box a:focus,
-.imh-box--narrow a:focus {
-  color:rgb(124, 70, 41);
-}
+?>
 
-.imh-btn {
-  margin-left: 15px;
-  padding: 5px 15px;
-  border-radius: 6px;
-}
+<style>
+    .panel-body a,
+    .imh-box a,
+    .imh-footer-box a,
+    .imh-box--narrow a,
+    .panel-body a,
+    .imh-box a,
+    .imh-footer-box a,
+    .imh-box--narrow a {
+        color: rgb(175, 82, 32);
+    }
 
-.imh-title {
-  margin: 0.25em 0 1em 0;
-}
+    .panel-body a:hover,
+    .imh-box a:hover,
+    .imh-footer-box a:hover,
+    .imh-box--narrow a:hover,
+    .panel-body a:focus,
+    .imh-box a:focus,
+    .imh-footer-box a:focus,
+    .imh-box--narrow a:focus {
+        color: rgb(97, 51, 27);
+    }
 
-.imh-title-img {
-  margin-right: 0.5em;
-}
+    .imh-btn {
+        margin-left: 15px;
+        padding: 5px 15px;
+        border-radius: 6px;
+    }
 
-.sys-snap-tables {
-    border-collapse: collapse;
-    margin: 2em 0;
-    background: #fafcff;
-}
+    .imh-piechart-col {
+        width: 50%;
+        vertical-align: top;
+    }
 
-.sys-snap-tables,
-.sys-snap-tables th,
-.sys-snap-tables td {
-  border: 1px solid #000;
-}
+    .imh-title {
+        margin: 0.25em 0 1em 0;
+    }
 
-.sys-snap-tables th,
-.sys-snap-tables td {
-  padding: 4px 8px;
-}
+    .imh-title-img {
+        margin-right: 0.5em;
+    }
 
-.sys-snap-tables thead {
-    background:#e6f2ff; 
-    color:#333;
-    font-weight: 600;
-}
+    .sys-snap-tables {
+        border-collapse: collapse;
+        margin: 2em 0;
+        background: #fafcff;
+    }
 
-.sys-snap-tables tr.odd-num-table-row {
-    background: #f4f4f4;
-}
+    .sys-snap-tables,
+    .sys-snap-tables th,
+    .sys-snap-tables td {
+        border: 1px solid #000;
+    }
 
-.tabs-nav {
-    display: flex;
-    border-bottom: 1px solid #e3e3e3;
-    margin-bottom: 2em;
-}
+    .sys-snap-tables th,
+    .sys-snap-tables td {
+        padding: 4px 8px;
+    }
 
-.tabs-nav button {
-    border: none;
-    background: #f8f8f8;
-    color: #333;
-    padding: 12px 28px;
-    cursor: pointer;
-    border-top-left-radius: 6px;
-    border-top-right-radius: 6px;
-    font-size: 1em;
-    margin-bottom: -1px;
-    border-bottom: 2px solid transparent;
-    transition: background 0.15s, border-color 0.15s;
-}
+    .sys-snap-tables thead {
+        background: #e6f2ff;
+        color: #333;
+        font-weight: 600;
+    }
 
-.tabs-nav button.active {
-    background: #fff;
-    border-bottom: 2px solid rgb(175, 82, 32);
-    color: rgb(175, 82, 32);
-    font-weight: 600;
-}
+    .sys-snap-tables tr.odd-num-table-row {
+        background: #f4f4f4;
+    }
 
-.tab-content { display: none; }
+    .tabs-nav {
+        display: flex;
+        border-bottom: 1px solid #e3e3e3;
+        margin-bottom: 2em;
+    }
 
-.tab-content.active { display: block; }
+    .tabs-nav button {
+        border: none;
+        background: #f8f8f8;
+        color: #333;
+        padding: 12px 28px;
+        cursor: pointer;
+        border-top-left-radius: 6px;
+        border-top-right-radius: 6px;
+        font-size: 1em;
+        margin-bottom: -1px;
+        border-bottom: 2px solid transparent;
+        transition: background 0.15s, border-color 0.15s;
+    }
 
-.imh-status {
-  display: inline-block;
-  padding: 6px 18px;
-  border-radius: 14px;
-  font-weight: 600;
-  margin-right: 18px;
-  border: 1px solid;
-}
+    .tabs-nav button.active {
+        background: #fff;
+        border-bottom: 2px solid rgb(175, 82, 32);
+        color: rgb(175, 82, 32);
+        font-weight: 600;
+    }
 
-.imh-status-running {
-  background: #e6ffee;
-  color: #26a042;
-  border-color: #8fd19e;
-}
+    .tab-content {
+        display: none;
+    }
 
-.imh-status-notrunning {
-  background: #ffeaea;
-  color: #c22626;
-  border-color: #e99;
-}
+    .tab-content.active {
+        display: block;
+    }
 
-.imh-box {
-    margin: 2em 0;
-    padding: 1em;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    display: block;
-}
+    .imh-status {
+        display: inline-block;
+        padding: 6px 18px;
+        border-radius: 14px;
+        font-weight: 600;
+        margin-right: 18px;
+        border: 1px solid;
+    }
 
-.imh-box--narrow {
-    margin: 1em 0 1em 0;
-    padding: 1em;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    display: block;
-}
+    .imh-status-running {
+        background: #e6ffee;
+        color: #26a042;
+        border-color: #8fd19e;
+    }
 
-.imh-box--footer {
-    margin: 2em 0 2em 0;
-    padding: 1em;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    display: block;
-}
+    .imh-status-notrunning {
+        background: #ffeaea;
+        color: #c22626;
+        border-color: #e99;
+    }
 
-.imh-pre {
-    background: #f8f8f8;
-    border: 1px solid #ccc;
-    padding: 1em;
-    margin: 2em;
-}
+    .imh-box {
+        margin: 2em 0;
+        padding: 1em;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        display: block;
+    }
 
-.imh-server-time {
-    margin-left: 1em;
-    color: #444;
-    font-weight: 600;
-}
+    .imh-width-full {
+        table-layout: fixed;
+        width: 100%;
+    }
 
-.imh-spacer {
-    margin-top: 2em;
-}
+    .imh-box--narrow {
+        margin: 1em 0 1em 0;
+        padding: 1em;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        display: block;
+    }
 
-.imh-user-section {
-    display: block;
-    padding: 0.5em 1em;
-    border-top: 1px solid black;
-}
+    .imh-box--footer {
+        margin: 2em 0 2em 0;
+        padding: 1em;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        display: block;
+    }
 
-.imh-user-name {
-    color: rgb(42, 73, 94);
-}
+    .imh-pre {
+        background: #f8f8f8;
+        border: 1px solid #ccc;
+        padding: 1em;
+        margin: 2em;
+    }
 
-.imh-table-alt {
-    background: #f4f4f4;
-}
+    .imh-server-time {
+        margin-left: 1em;
+        color: #444;
+        font-weight: 600;
+    }
 
-.imh-alert {
-    color: #c00;
-    margin: 1em;
-}
+    .imh-spacer {
+        margin-top: 2em;
+    }
 
-.imh-footer-img {
-    margin-bottom: 1em;
-}
+    .imh-user-section {
+        display: block;
+        padding: 0.5em 1em;
+        border-top: 1px solid black;
+    }
 
-.imh-footer-box {
-    margin: 2em 0 2em 0;
-    padding: 1em;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    display: block;
-}
+    .imh-user-name {
+        color: rgb(42, 73, 94);
+    }
 
-.imh-small-note {
-    font-size: 0.9em;
-    color: #555;
-}
+    .imh-table-alt {
+        background: #f4f4f4;
+    }
 
-.text-right {
-  text-align: right;
-}
+    .imh-alert {
+        color: #c00;
+        margin: 1em;
+    }
 
-.imh-monospace {
-  font-family: monospace;
-}
+    .imh-footer-img {
+        margin-bottom: 1em;
+    }
 
-.imh-box.margin-bottom {
-  margin-bottom: 1em;
-}
+    .imh-footer-box {
+        margin: 2em 0 2em 0;
+        padding: 1em;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        display: block;
+    }
 
-.imh-pid {
-  color: #888;
-}
+    .imh-small-note {
+        font-size: 0.9em;
+        color: #555;
+    }
 
-.panel-body {
-    padding-bottom: 5px;
-    display: block;
-}
+    .text-right {
+        text-align: right;
+    }
 
-.imh-collapsible-content {
-    max-height: 33333px;
-    overflow: hidden;
-    transition: max-height 0.3s ease;
-}
+    .imh-monospace {
+        font-family: monospace;
+    }
 
-.imh-collapsible-content[aria-hidden="true"] {
-    max-height: 0;
-}
+    .imh-box.margin-bottom {
+        margin-bottom: 1em;
+    }
 
-.imh-toggle-btn {
-    background: #eee;
-    border: 1px solid #999;
-    border-radius: 4px;
-    cursor: pointer;
-    margin-left: 0.5em;
-    padding: 2px 10px;
-    font-family: monospace;
-    font-size: larger;
-}
+    .imh-pid {
+        color: #888;
+    }
 
-.imh-toggle-btn:hover {
-    background: #ddd;
-    font-weight: bold;
-    color: #333;
-}
+    .panel-body {
+        padding-bottom: 5px;
+        display: block;
+    }
 
-.imh-larger-text {
-    font-size: 1.5em;
-}
-</style>';
+    .imh-collapsible-content {
+        max-height: 33333px;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+    }
 
+    .imh-collapsible-content[aria-hidden="true"] {
+        max-height: 0;
+    }
 
+    .imh-toggle-btn {
+        background: #eee;
+        border: 1px solid #999;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-left: 0.5em;
+        padding: 2px 10px;
+        font-family: monospace;
+        font-size: larger;
+    }
+
+    .imh-toggle-btn:hover {
+        background: #ddd;
+        font-weight: bold;
+        color: #333;
+    }
+
+    .imh-larger-text {
+        font-size: 1.5em;
+    }
+
+    .imh-table-responsive {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    @media (max-width: 600px) {
+
+        .sys-snap-tables,
+        .imh-box,
+        .imh-box--narrow,
+        .imh-footer-box {
+            width: 100% !important;
+            min-width: 350px;
+            font-size: 0.97em;
+        }
+
+        .imh-piechart-col {
+            width: 100% !important;
+            display: block;
+            box-sizing: border-box;
+        }
+
+        .sys-snap-tables th,
+        .sys-snap-tables td {
+            padding: 4px 4px;
+        }
+
+        /* Optionally stack the pie chart columns vertically */
+        .sys-snap-tables tr {
+            display: flex;
+            flex-direction: column;
+        }
+    }
+
+    #PiechartUsersCPU,
+    #PiechartUsersMemory {
+        width: 100% !important;
+        max-width: 100%;
+        height: auto !important;
+        min-width: 200px;
+    }
+</style>
+
+<?php
 
 
 
@@ -473,43 +532,50 @@ echo '<div class="tabs-nav" id="imh-tabs-nav">
 
 // Tab selector script
 
-echo "<script>
-document.querySelectorAll('#imh-tabs-nav button').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        // Remove 'active' class from all buttons and tab contents
-        document.querySelectorAll('#imh-tabs-nav button').forEach(btn2 => btn2.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-        // Activate this button and the corresponding tab
-        btn.classList.add('active');
-        var tabId = btn.getAttribute('data-tab');
-        document.getElementById(tabId).classList.add('active');
-    });
-});
+?>
 
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.imh-toggle-btn').forEach(function(btn) {
+<script>
+    // Tab navigation functionality
+
+    document.querySelectorAll('#imh-tabs-nav button').forEach(function(btn) {
         btn.addEventListener('click', function() {
-            var targetId = btn.getAttribute('data-target');
-            var collapsed = btn.getAttribute('data-collapsed') === '1';
-            var content = document.getElementById(targetId);
-
-            if (collapsed) {
-                // Expand
-                content.setAttribute('aria-hidden', 'false');
-                btn.innerText = '[–]';
-                btn.setAttribute('data-collapsed', '0');
-                btn.setAttribute('aria-expanded', 'true');
-            } else {
-                // Collapse
-                content.setAttribute('aria-hidden', 'true');
-                btn.innerText = '[+]';
-                btn.setAttribute('data-collapsed', '1');
-                btn.setAttribute('aria-expanded', 'false');
-            }
+            // Remove 'active' class from all buttons and tab contents
+            document.querySelectorAll('#imh-tabs-nav button').forEach(btn2 => btn2.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            // Activate this button and the corresponding tab
+            btn.classList.add('active');
+            var tabId = btn.getAttribute('data-tab');
+            document.getElementById(tabId).classList.add('active');
         });
     });
-});
-</script>";
+
+    // Each user section can be collapsed or expanded with a button.
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.imh-toggle-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var targetId = btn.getAttribute('data-target');
+                var collapsed = btn.getAttribute('data-collapsed') === '1';
+                var content = document.getElementById(targetId);
+
+                if (collapsed) {
+                    // Expand
+                    content.setAttribute('aria-hidden', 'false');
+                    btn.innerText = '[–]';
+                    btn.setAttribute('data-collapsed', '0');
+                    btn.setAttribute('aria-expanded', 'true');
+                } else {
+                    // Collapse
+                    content.setAttribute('aria-hidden', 'true');
+                    btn.innerText = '[+]';
+                    btn.setAttribute('data-collapsed', '1');
+                    btn.setAttribute('aria-expanded', 'false');
+                }
+            });
+        });
+    });
+</script>
+<?php
 
 
 
@@ -663,6 +729,7 @@ echo '</form>';
 
 
 
+
 //Sys-snap output
 
 echo '<h2 class="imh-spacer">Scores from ' . sprintf('%02d:%02d', $start_hour, $start_min) . ' to ' . sprintf('%02d:%02d', $end_hour, $end_min) . '</h2>';
@@ -770,6 +837,33 @@ function cleanProcName($proc)
 
 $data = parseSysSnap($output);
 
+// Output data for the pie graph
+$pieDataCPU = [];
+foreach ($data as $user => $vals) {
+    $pieDataCPU[] = [
+        'user' => $user,
+        'cpuScore' => floatval($vals['cpu-score'])
+    ];
+};
+
+$pieDataMemory = [];
+// Sort $data by memory-score descending for the pie chart
+$sortedByMemory = $data;
+uasort($sortedByMemory, function ($a, $b) {
+    return floatval($b['memory-score']) <=> floatval($a['memory-score']);
+});
+foreach ($sortedByMemory as $user => $vals) {
+    $pieDataMemory[] = [
+        'user' => $user,
+        'memoryScore' => floatval($vals['memory-score'])
+    ];
+};
+
+echo "<script>
+window.sysSnapPieDataCPU = " . json_encode($pieDataCPU) . ";
+window.sysSnapPieDataMemory = " . json_encode($pieDataMemory) . ";
+</script>";
+
 // --- User Summary Table ---
 echo '<div class="imh-box">';
 echo '<table class="sys-snap-tables">';
@@ -800,6 +894,29 @@ foreach ($data as $user => $vals) {
 }
 echo '</table>';
 echo '</div>';
+
+// Pie chart container
+echo '
+<div class="imh-box imh-table-responsive">
+<table class="sys-snap-tables imh-width-full">
+    <thead>
+        <th class="imh-piechart-col">CPU Usage</th>
+        <th class="imh-piechart-col">Memory Usage</th>
+    </thead>
+    <tr>
+        <td class="imh-piechart-col">
+            <div id="PiechartUsersCPU"></div>
+        </td>
+        <td class="imh-piechart-col">
+            <div id="PiechartUsersMemory"></div>
+        </td>
+    </tr>
+</table>
+</div>
+';
+
+// --- User Details Sections ---
+// Each user has a collapsible section with CPU and Memory details.
 
 echo '<div class="imh-spacer imh-monospace">';
 foreach ($data as $user => $vals) {
@@ -1201,15 +1318,27 @@ class SarTableRenderer
 }
 // Usage
 echo '<div id="tab-loadavg" class="tab-content">';
+
+
 $processor = new SarDataProcessor();
 $renderer = new SarTableRenderer($CSRF_TOKEN);
 $sarData = $processor->getSarData();
 echo $renderer->render($sarData);
+
+/* echo "<script>
+window.sysSnapSarLoadavgData = " . json_encode($sarData['data']) . ";
+</script>";
+echo '<div class="imh-box imh-box.margin-bottom"><div id="LinechartLoadavg"></div></div>'; */
+
 echo '</div>';
 
 
 
-
+if ($isCPanelServer) {
+    echo '<script type="module" crossorigin src="imh-sys-snap.js"></script>';
+} else {
+    echo '<script type="module" crossorigin src="design/js/imh-sys-snap.js"></script>';
+}
 
 
 
