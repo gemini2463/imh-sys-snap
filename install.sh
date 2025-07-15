@@ -4,7 +4,7 @@
 set -euo pipefail
 
 # Script metadata
-readonly SCRIPT_VERSION="0.0.8"
+readonly SCRIPT_VERSION="0.0.9"
 readonly SCRIPT_NAME="imh-sys-snap"
 readonly BASE_URL="https://rossu.dev/imh-sys-snap"
 

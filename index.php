@@ -12,7 +12,7 @@
  *
  * Author: Ross Uber
  * Maintainer: InMotion Hosting
- * Version: 0.0.8
+ * Version: 0.0.9
  */
 
 
@@ -232,7 +232,6 @@ if ($isCPanelServer) {
     }
 
     .imh-piechart-col {
-        width: 50%;
         vertical-align: top;
     }
 
@@ -495,12 +494,18 @@ if ($isCPanelServer) {
         }
     }
 
+    .chart-container {
+        max-height: 800px !important;
+        max-width: 800px !important;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
     #PiechartUsersCPU,
     #PiechartUsersMemory {
         width: 100% !important;
         max-width: 100%;
-        height: auto !important;
-        min-width: 200px;
     }
 </style>
 
@@ -837,7 +842,13 @@ function cleanProcName($proc)
 
 $data = parseSysSnap($output);
 
+
+
+
+
+
 // Output data for the pie graph
+
 $pieDataCPU = [];
 foreach ($data as $user => $vals) {
     $pieDataCPU[] = [
@@ -863,6 +874,12 @@ echo "<script>
 window.sysSnapPieDataCPU = " . json_encode($pieDataCPU) . ";
 window.sysSnapPieDataMemory = " . json_encode($pieDataMemory) . ";
 </script>";
+
+
+
+
+
+
 
 // --- User Summary Table ---
 echo '<div class="imh-box">';
@@ -903,7 +920,7 @@ echo '
         <th class="imh-piechart-col">CPU Usage</th>
         <th class="imh-piechart-col">Memory Usage</th>
     </thead>
-    <tr>
+    <tr class="imh-piechart-row">
         <td class="imh-piechart-col">
             <div id="PiechartUsersCPU"></div>
         </td>
@@ -1325,10 +1342,12 @@ $renderer = new SarTableRenderer($CSRF_TOKEN);
 $sarData = $processor->getSarData();
 echo $renderer->render($sarData);
 
-/* echo "<script>
+echo "<script>
 window.sysSnapSarLoadavgData = " . json_encode($sarData['data']) . ";
+window.sysSnapSarPagingData = " . json_encode($sarData['data']) . ";
 </script>";
-echo '<div class="imh-box imh-box.margin-bottom"><div id="LinechartLoadavg"></div></div>'; */
+echo '<div class="imh-box imh-box.margin-bottom"><div id="LinechartLoadavg"></div></div>';
+echo '<div class="imh-box imh-box.margin-bottom"><div id="LinechartPaging"></div></div>';
 
 echo '</div>';
 
