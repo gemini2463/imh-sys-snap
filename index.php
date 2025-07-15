@@ -112,6 +112,9 @@ function imh_guess_sar_interval()
 {
     $cmd = "LANG=C sar -q 2>&1 | grep -E '^[0-9]{2}:[0-9]{2}:[0-9]{2}' | head -2 | awk '{print $1}'";
     $out = shell_exec($cmd);
+    if (!is_string($out)) {
+        return 600; // fallback if shell_exec failed
+    }
     $lines = array_filter(array_map('trim', explode("\n", $out)));
     if (count($lines) < 2) return 600; // fallback
     $t1 = strtotime($lines[0]);
