@@ -52,10 +52,20 @@ function PiechartUsersMemory() {
   }, []);
 
   return (
-    <div>
+    <div className="chart-container">
       <canvas ref={chartRef} />
     </div>
   );
+}
+
+// For local testing: inject dummy data if not present
+if (!window.sysSnapPieDataMemory) {
+  window.sysSnapPieDataMemory = [
+    { user: "alice", memoryScore: 120 },
+    { user: "bob", memoryScore: 80 },
+    { user: "carol", memoryScore: 60 },
+    { user: "dave", memoryScore: 40 },
+  ];
 }
 
 export default PiechartUsersMemory;

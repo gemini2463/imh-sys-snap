@@ -52,10 +52,19 @@ function PiechartUsersCPU() {
   }, []);
 
   return (
-    <div>
+    <div className="chart-container">
       <canvas ref={chartRef} />
     </div>
   );
+}
+
+// For local testing: provide dummy data if window.sysSnapPieDataCPU is not set
+if (!window.sysSnapPieDataCPU) {
+  window.sysSnapPieDataCPU = [
+    { user: "alice", cpuScore: 30 },
+    { user: "bob", cpuScore: 45 },
+    { user: "carol", cpuScore: 25 },
+  ];
 }
 
 export default PiechartUsersCPU;
