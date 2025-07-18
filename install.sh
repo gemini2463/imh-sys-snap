@@ -3,6 +3,9 @@
 # Exit on error, undefined variables, pipe failures
 set -euo pipefail
 
+# Enable debugging output
+#set -x
+
 # Script metadata
 readonly SCRIPT_VERSION="0.1.1"
 readonly SCRIPT_NAME="imh-sys-snap"
@@ -63,16 +66,28 @@ download_file() {
     local url=$1
     local destination=$2
 
-    local http_code
-    http_code=$(wget --server-response --spider -O /dev/null "$url" 2>&1 | awk '/^  HTTP/{print $2; exit}')
-
-    if [[ $http_code == "404" ]]; then
-        print_message "$RED" "File not found (404): $url"
+    if [[ -d "$destination" ]]; then
+        print_message "$RED" "Destination is a directory, not a file: $destination"
         return 1
     fi
 
-    if wget -q --no-cache -O "$destination" "$url"; then
+    # Get the final HTTP code after redirects
+    local http_code
+    http_code=$(wget --server-response --spider "$url" 2>&1 | awk '/^  HTTP|^HTTP/{code=$2} END{print code}')
+    print_message "$YELLOW" "HTTP status code for $url: $http_code"
+
+    if [[ -z "$http_code" ]]; then
+        print_message "$RED" "Could not get HTTP code for $url"
+        return 1
+    fi
+    if [[ "$http_code" != "200" ]]; then
+        print_message "$RED" "File not found or inaccessible (HTTP $http_code): $url"
+        return 1
+    fi
+
+    if wget -q -O "$destination" "$url"; then
         if [[ -s "$destination" ]]; then
+            print_message "$GREEN" "Downloaded $url to $destination"
             return 0
         fi
         rm -f "$destination"
