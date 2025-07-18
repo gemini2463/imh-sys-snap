@@ -12,7 +12,7 @@
  *
  * Author: Ross Uber
  * Maintainer: InMotion Hosting
- * Version: 0.1.0
+ * Version: 0.1.1
  */
 
 
@@ -38,6 +38,10 @@ declare(strict_types=1);
 
 $isCPanelServer = (
     (is_dir('/usr/local/cpanel') || is_dir('/var/cpanel') || is_dir('/etc/cpanel')) && (is_file('/usr/local/cpanel/cpanel') || is_file('/usr/local/cpanel/version'))
+);
+
+$isCWPServer = (
+    is_dir('/usr/local/cwp')
 );
 
 if ($isCPanelServer) {
@@ -522,7 +526,7 @@ if ($isCPanelServer) {
 // 4. Main Interface
 // ==========================
 
-$img_src = $isCPanelServer ? 'imh-sys-snap.png' : 'design/img/imh-sys-snap.png';
+$img_src = $isCWPServer ? 'design/img/imh-sys-snap.png' : 'imh-sys-snap.png';
 echo '<h1 class="imh-title"><img src="' . htmlspecialchars($img_src) . '" alt="sys-snap" class="imh-title-img" />System Snapshot (sys-snap)</h1>';
 
 
@@ -1356,10 +1360,12 @@ echo '</div>';
 
 
 
+$jsPath = $isCWPServer ? 'design/js/imh-sys-snap.js' : 'imh-sys-snap.js';
+
 if ($isCPanelServer) {
     echo '<script type="module" crossorigin src="imh-sys-snap.js"></script>';
 } else {
-    echo '<script type="module" crossorigin src="design/js/imh-sys-snap.js"></script>';
+    echo '<script type="module" crossorigin src="' . htmlspecialchars($jsPath) . '"></script>';
 }
 
 

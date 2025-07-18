@@ -4,7 +4,7 @@
 set -euo pipefail
 
 # Script metadata
-readonly SCRIPT_VERSION="0.1.0"
+readonly SCRIPT_VERSION="0.1.1"
 readonly SCRIPT_NAME="imh-sys-snap"
 readonly BASE_URL="https://rossu.dev/imh-sys-snap"
 
@@ -62,25 +62,26 @@ validate_url() {
 download_file() {
     local url=$1
     local destination=$2
-    local max_retries=3
-    local retry_count=0
 
-    while [[ $retry_count -lt $max_retries ]]; do
-        if wget -q --no-cache -O "$destination" "$url"; then
-            # Verify file was actually downloaded and not empty
-            if [[ -s "$destination" ]]; then
-                return 0
-            else
-                rm -f "$destination"
-                error_exit "Downloaded file is empty: $url"
-            fi
+    local http_code
+    http_code=$(wget --server-response --spider -O /dev/null "$url" 2>&1 | awk '/^  HTTP/{print $2; exit}')
+
+    if [[ $http_code == "404" ]]; then
+        print_message "$RED" "File not found (404): $url"
+        return 1
+    fi
+
+    if wget -q --no-cache -O "$destination" "$url"; then
+        if [[ -s "$destination" ]]; then
+            return 0
         fi
-        ((retry_count++))
-        print_message "$YELLOW" "Download failed, retrying... ($retry_count/$max_retries)"
-        sleep 2
-    done
-
-    error_exit "Failed to download after $max_retries attempts: $url"
+        rm -f "$destination"
+        print_message "$RED" "Downloaded file is empty: $url"
+        return 1
+    else
+        print_message "$RED" "Download failed for $url (HTTP $http_code)"
+        return 1
+    fi
 }
 
 copy_if_changed() {
@@ -282,7 +283,7 @@ install_plain() {
 update_cwp_config() {
     local target="/usr/local/cwpsrv/htdocs/resources/admin/include/3rdparty.php"
     local include_file="/usr/local/cwpsrv/htdocs/resources/admin/include/imh-sys-snap.php"
-    local include_statement="include('${include_file}');"
+    local include_statement="<?php include('${include_file}'); ?>"
 
     # Validate files
     [[ -f "$target" ]] || error_exit "Target file does not exist: $target"
@@ -311,7 +312,7 @@ update_cwp_config() {
     if grep -q '?>' "$target"; then
         # File has closing PHP tag - insert before it
         awk -v inc="$include_statement" '
-            /^[[:space:]]*\?>/ && !done {
+            /\?>/ && !done {
                 print inc
                 done = 1
             }

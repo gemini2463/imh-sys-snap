@@ -517,8 +517,9 @@ sub read_logs {
         }
 
         foreach my $l (@lines) {
-            my ( $user, $cpu, $memory, $command );
-            ( $user, $cpu, $memory, $command ) = $l =~ m{^(\w+)\s+\d+\s+(\d{1,2}\.\d)\s+(\d{1,2}\.\d).*\d{1,2}:\d{2}\s+(.*)$};
+            $l =~ s/^\s+//;
+            my @fields = split /\s+/, $l, 11;
+            my ($user, $pid, $cpu, $memory, $vsz, $rss, $tty, $stat, $start, $time, $command) = @fields;
 
             if ( defined $user && defined $cpu && defined $memory && defined $command ) {
 
