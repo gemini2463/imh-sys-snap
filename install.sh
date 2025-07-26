@@ -172,6 +172,37 @@ detect_control_panel() {
     fi
 }
 
+# Function to install package
+install_package() {
+    local package=$1
+
+    print_message "$YELLOW" "Checking repositories for $package..."
+
+    if command_exists yum; then
+        if yum install -y "$package"; then
+            print_message "$GREEN" "$package package installed with yum."
+            return 0
+        fi
+        print_message "$YELLOW" "Package $package not found in yum. Attempting manual installation."
+    elif command_exists apt-get; then
+        if apt-get update && apt-get install -y "$package"; then
+            print_message "$GREEN" "$package package installed with apt-get."
+            return 0
+        fi
+        print_message "$YELLOW" "Package $package not found in apt. Attempting manual installation."
+    else
+        error_exit "No supported package manager found"
+    fi
+
+    # Fallback: manual install
+    mkdir -p /opt/imh-sys-snap/bin || error_exit "Could not create bin directory"
+    wget -O /opt/imh-sys-snap/bin/sys-snap.pl https://raw.githubusercontent.com/cPanelTechs/SysSnapv2/master/sys-snap.pl \
+        || error_exit "Failed to download sys-snap.pl"
+    chmod 744 /opt/imh-sys-snap/bin/sys-snap.pl
+    echo y | /usr/bin/perl /opt/imh-sys-snap/bin/sys-snap.pl --start \
+        || error_exit "Failed to install $package via sys-snap.pl"
+}
+
 # Function to install for cPanel
 install_cpanel() {
     print_message "$YELLOW" "Installing for cPanel..."
@@ -431,6 +462,10 @@ main() {
 
     # Validate base URL is accessible
     validate_url "$BASE_URL/index.php"
+
+    # Install package
+    install_package "$SCRIPT_NAME"
+    echo ""
 
     # Detect control panel
     local panel=$(detect_control_panel)
