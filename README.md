@@ -35,9 +35,3 @@ sys-snap Web Interface for cPanel/WHM and CWP
 ## cPanel conf
 - imh-sys-snap.conf - [AppConfig Configuration File](https://api.docs.cpanel.net/guides/guide-to-whm-plugins/guide-to-whm-plugins-appconfig-configuration-file)
 - imh-sys-snap.conf.sha256 - `sha256sum imh-sys-snap.conf > imh-sys-snap.conf.sha256`
-
-## CWP include
-
-- cwp-include.php - [CWP include](https://wiki.centos-webpanel.com/how-to-build-a-cwp-module)
-- cwp-include.php.sha256 - `sha256sum cwp-include.php > cwp-include.php.sha256`
-
