@@ -274,7 +274,6 @@ install_cwp() {
     echo ""
 
     download_file_with_checksum "$BASE_URL/$SCRIPT_NAME.php" "$TEMP_DIR/$SCRIPT_NAME.php" || error_exit "Failed to get script file"
-    download_file_with_checksum "$BASE_URL/cwp-include.php" "$TEMP_DIR/cwp-include.php" || error_exit "Failed to get include file"
     download_file_with_checksum "$BASE_URL/$SCRIPT_NAME.png" "$TEMP_DIR/$SCRIPT_NAME.png" || error_exit "Failed to get PNG file"
     download_file_with_checksum "$BASE_URL/$SCRIPT_NAME.js" "$TEMP_DIR/$SCRIPT_NAME.js" || error_exit "Failed to get JS file"
 
@@ -293,17 +292,11 @@ install_cwp() {
     # Create directories if they don't exist
     create_directory "/usr/local/cwpsrv/htdocs/admin/design/img"
     create_directory "/usr/local/cwpsrv/htdocs/admin/design/js"
-    create_directory "/usr/local/cwpsrv/htdocs/resources/admin/include"
 
     # Move additional files
     copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.png" "/usr/local/cwpsrv/htdocs/admin/design/img/" || print_message "$YELLOW" "Warning: Failed to copy image"
 
     copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.js" "/usr/local/cwpsrv/htdocs/admin/design/js/" || print_message "$YELLOW" "Warning: Failed to copy $SCRIPT_NAME.js"
-
-    copy_if_changed "$TEMP_DIR/cwp-include.php" "/usr/local/cwpsrv/htdocs/resources/admin/include/$SCRIPT_NAME.php" || error_exit "Failed to copy include file"
-
-    # Update 3rdparty.php
-    update_cwp_config
 }
 
 # No control panel install
@@ -329,65 +322,6 @@ install_plain() {
     chmod 600 "$dest/$SCRIPT_NAME.js" "$dest/$SCRIPT_NAME.png"
 
     print_message "$GREEN" "Plain install complete. Files installed to $dest"
-}
-
-# Function to update CWP configuration
-update_cwp_config() {
-    local target="/usr/local/cwpsrv/htdocs/resources/admin/include/3rdparty.php"
-    local include_file="/usr/local/cwpsrv/htdocs/resources/admin/include/$SCRIPT_NAME.php"
-    local include_statement="include('${include_file}');"
-
-    # Validate files
-    [[ -f "$target" ]] || error_exit "Target file does not exist: $target"
-    [[ -r "$target" ]] || error_exit "Cannot read target file: $target"
-    [[ -w "$target" ]] || error_exit "Cannot write to target file: $target"
-    [[ -f "$include_file" ]] || error_exit "Include file does not exist: $include_file"
-
-    # Create backup
-    local backup="${target}.bak.$(date +%Y%m%d_%H%M%S)"
-    copy_if_changed "$target" "$backup" || error_exit "Failed to create backup"
-    print_message "$GREEN" "Backup created: $backup"
-
-    # Check if include already exists
-    if grep -Fq "include('${include_file}')" "$target" ||
-        grep -Fq "include(\"${include_file}\")" "$target" ||
-        grep -Fq "require('${include_file}')" "$target" ||
-        grep -Fq "require_once('${include_file}')" "$target"; then
-        print_message "$YELLOW" "Include line already exists. No changes made."
-        return 0
-    fi
-
-    # Create temporary file
-    local temp_file=$(mktemp "${target}.XXXXXX") || error_exit "Failed to create temp file"
-
-    # Add include statement
-    if grep -q '?>' "$target"; then
-        # File has closing PHP tag - insert before it
-        awk -v inc="$include_statement" '
-            /\?>/ && !done {
-                print inc
-                done = 1
-            }
-            { print }
-        ' "$target" >"$temp_file"
-    else
-        # No closing PHP tag - append to end
-        copy_if_changed "$target" "$temp_file"
-        echo "" >>"$temp_file"
-        echo "$include_statement" >>"$temp_file"
-    fi
-
-    # Validate PHP syntax if possible
-    if command_exists php; then
-        if ! php -l "$temp_file" >/dev/null 2>&1; then
-            rm -f "$temp_file"
-            error_exit "Modified file has PHP syntax errors. Aborting."
-        fi
-    fi
-
-    # Replace original file
-    mv "$temp_file" "$target" || error_exit "Failed to update target file"
-    print_message "$GREEN" "Successfully added include statement to $target"
 }
 
 # Function to ensure sar/sysstat is installed and running

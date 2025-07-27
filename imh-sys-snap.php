@@ -11,7 +11,7 @@
  *   - CWP:       /usr/local/cwpsrv/htdocs/resources/admin/modules/imh-sys-snap.php
  *
  * Maintainer: InMotion Hosting
- * Version: 0.1.2
+ * Version: 0.1.3
  */
 
 
@@ -526,7 +526,7 @@ if ($isCPanelServer) {
 // ==========================
 
 $img_src = $isCWPServer ? 'design/img/imh-sys-snap.png' : 'imh-sys-snap.png';
-echo '<h1 class="imh-title"><img src="' . htmlspecialchars($img_src) . '" alt="sys-snap" class="imh-title-img" />System Snapshot (sys-snap)</h1>';
+echo '<h1 class="imh-title"><img src="' . htmlspecialchars($img_src) . '" alt="sys-snap" class="imh-title-img" />System Snapshot</h1>';
 
 
 
