@@ -636,24 +636,6 @@ lerna-debug.log*
 *.sw?
 </file>
 
-<file path="imh-sys-snap.conf">
-service=whostmgr
-url=/cgi/imh-sys-snap/index.php
-user=root
-phpHandler=/php/83/etc
-features=any
-displayname=System Snapshot
-acls=any
-entryurl=imh-sys-snap/index.php
-target=_self
-icon=imh-sys-snap.png
-name=imh-sys-snap
-</file>
-
-<file path="imh-sys-snap.conf.sha256">
-ef9090e5dda4c5a6d40f623929efeeaa33b39b79719d41a1dd188c5f5144b451  imh-sys-snap.conf
-</file>
-
 <file path="imh-sys-snap.js">
 (function(){const e=document.createElement("link").relList;if(e&&e.supports&&e.supports("modulepreload"))return;for(const o of document.querySelectorAll('link[rel="modulepreload"]'))s(o);new MutationObserver(o=>{for(const c of o)if(c.type==="childList")for(const u of c.addedNodes)u.tagName==="LINK"&&u.rel==="modulepreload"&&s(u)}).observe(document,{childList:!0,subtree:!0});function n(o){const c={};return o.integrity&&(c.integrity=o.integrity),o.referrerPolicy&&(c.referrerPolicy=o.referrerPolicy),o.crossOrigin==="use-credentials"?c.credentials="include":o.crossOrigin==="anonymous"?c.credentials="omit":c.credentials="same-origin",c}function s(o){if(o.ep)return;o.ep=!0;const c=n(o);fetch(o.href,c)}})();var iu={exports:{}},Ss={};/**
  * @license React
@@ -1564,6 +1546,24 @@ sub module_sanity_check {
     "vite": "^7.0.4"
   }
 }
+</file>
+
+<file path="imh-sys-snap.conf">
+service=whostmgr
+url=/cgi/imh-sys-snap/index.php
+user=root
+phpHandler=/php/83/etc
+features=any
+displayname=System Snapshot
+acls=any
+entryurl=imh-sys-snap/index.php
+target=_self
+icon=imh-sys-snap.png
+name=imh-sys-snap
+</file>
+
+<file path="imh-sys-snap.conf.sha256">
+ef9090e5dda4c5a6d40f623929efeeaa33b39b79719d41a1dd188c5f5144b451  imh-sys-snap.conf
 </file>
 
 <file path="imh-sys-snap.php">
@@ -4620,20 +4620,20 @@ install_cpanel() {
 
     # Move files to final destination
     print_message "$BRIGHTBLUE" "Installing files..."
-    copy_if_changed "$TEMP_DIR/index.php" "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME/" || error_exit "Failed to copy index.php"
+    copy_if_changed "$TEMP_DIR/index.php" "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME/index.php" || error_exit "Failed to copy index.php"
 
-    copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.conf" "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME/" || error_exit "Failed to copy config"
+    copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.conf" "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME/$SCRIPT_NAME.conf" || error_exit "Failed to copy config"
 
-    copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.js" "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME/" || error_exit "Failed to copy $SCRIPT_NAME.js"
+    copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.js" "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME/$SCRIPT_NAME.js" || error_exit "Failed to copy $SCRIPT_NAME.js"
 
-    copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.png" "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME/" || error_exit "Failed to copy image"
+    copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.png" "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME/$SCRIPT_NAME.png" || error_exit "Failed to copy image"
 
     # Set permissions
     chmod 755 "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME/index.php" || error_exit "Failed to set permissions"
 
     # Copy image to addon_plugins if directory exists
     if [[ -d "/usr/local/cpanel/whostmgr/docroot/addon_plugins" ]]; then
-        copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.png" "/usr/local/cpanel/whostmgr/docroot/addon_plugins/" || print_message "$YELLOW" "Warning: Failed to copy image to addon_plugins"
+        copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.png" "/usr/local/cpanel/whostmgr/docroot/addon_plugins/$SCRIPT_NAME.png" || print_message "$YELLOW" "Warning: Failed to copy image to addon_plugins"
     fi
 
     # Register plugin
@@ -4679,7 +4679,7 @@ install_cwp() {
 
     # Copy files to destination
     print_message "$BRIGHTBLUE" "Installing files..."
-    copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.php" "/usr/local/cwpsrv/htdocs/resources/admin/modules/" || error_exit "Failed to copy PHP file"
+    copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.php" "/usr/local/cwpsrv/htdocs/resources/admin/modules/$SCRIPT_NAME.php" || error_exit "Failed to copy PHP file"
     chmod 755 "/usr/local/cwpsrv/htdocs/resources/admin/modules/$SCRIPT_NAME.php" || error_exit "Failed to set permissions"
 
     # Create directories if they don't exist
@@ -4687,9 +4687,9 @@ install_cwp() {
     create_directory "/usr/local/cwpsrv/htdocs/admin/design/js"
 
     # Move additional files
-    copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.png" "/usr/local/cwpsrv/htdocs/admin/design/img/" || print_message "$YELLOW" "Warning: Failed to copy image"
+    copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.png" "/usr/local/cwpsrv/htdocs/admin/design/img/$SCRIPT_NAME.png" || print_message "$YELLOW" "Warning: Failed to copy image"
 
-    copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.js" "/usr/local/cwpsrv/htdocs/admin/design/js/" || print_message "$YELLOW" "Warning: Failed to copy $SCRIPT_NAME.js"
+    copy_if_changed "$TEMP_DIR/$SCRIPT_NAME.js" "/usr/local/cwpsrv/htdocs/admin/design/js/$SCRIPT_NAME.js" || print_message "$YELLOW" "Warning: Failed to copy $SCRIPT_NAME.js"
 }
 
 # No control panel install
