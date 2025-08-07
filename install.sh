@@ -275,7 +275,7 @@ install_cwp() {
     echo ""
 
     download_file_with_checksum "$BASE_URL/$SCRIPT_NAME.php" "$TEMP_DIR/$SCRIPT_NAME.php" || error_exit "Failed to get script file"
-    download_file_with_checksum "$BASE_URL/cwp-include.php" "$TEMP_DIR/cwp-include.php" || error_exit "Failed to get include file"
+    download_file_with_checksum "$BASE_URL/imh-plugins.php" "$TEMP_DIR/imh-plugins.php" || error_exit "Failed to get include file"
     download_file_with_checksum "$BASE_URL/$SCRIPT_NAME.png" "$TEMP_DIR/$SCRIPT_NAME.png" || error_exit "Failed to get PNG file"
     download_file_with_checksum "$BASE_URL/$SCRIPT_NAME.js" "$TEMP_DIR/$SCRIPT_NAME.js" || error_exit "Failed to get JS file"
 
