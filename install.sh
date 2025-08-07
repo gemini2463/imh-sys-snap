@@ -123,12 +123,12 @@ download_file_with_checksum() {
     (
         cd "$(dirname "$destination")"
         if ! sha256sum -c "$(basename "$destination").sha256" --status; then
-            print_message "$RED" "Checksum verification FAILED for $destination"
+            print_message "$RED" "Checksum verification FAILED for $(basename "$destination")"
             rm -f "$destination"
             exit 1
         fi
     )
-    print_message "$YELLOW" "Checksum verified for $destination"
+    print_message "$YELLOW" "Checksum verified for $(basename "$destination")"
     echo ""
     return 0
 }
