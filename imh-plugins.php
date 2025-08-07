@@ -1,4 +1,6 @@
 <?php
+//This file is used to dynamically generate the admin panel menu for IMH plugins
+
 $plugin_dir = '/usr/local/cwpsrv/htdocs/resources/admin/modules/';
 $plugins = [];
 
