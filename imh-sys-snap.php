@@ -160,10 +160,18 @@ function imh_cached_shell_exec($tag, $command, $sar_interval)
 
 // Defaults and validation
 
-$start_hour = min(23, max(0, (int)($_POST['start_hour'] ?? 0)));
-$start_min  = min(59, max(0, (int)($_POST['start_min'] ?? 0)));
-$end_hour   = min(23, max(0, (int)($_POST['end_hour'] ?? 23)));
-$end_min    = min(59, max(0, (int)($_POST['end_min'] ?? 59)));
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['reset_time'])) {
+    // Reset to defaults
+    $start_hour = 0;
+    $start_min  = 0;
+    $end_hour   = 23;
+    $end_min    = 59;
+} else {
+    $start_hour = min(23, max(0, (int)($_POST['start_hour'] ?? 0)));
+    $start_min  = min(59, max(0, (int)($_POST['start_min'] ?? 0)));
+    $end_hour   = min(23, max(0, (int)($_POST['end_hour'] ?? 23)));
+    $end_min    = min(59, max(0, (int)($_POST['end_min'] ?? 59)));
+}
 
 
 
@@ -235,6 +243,12 @@ if ($isCPanelServer) {
         margin-left: 15px;
         padding: 5px 15px;
         border-radius: 6px;
+    }
+
+    .imh-red-btn {
+        background: #f44336;
+        color: #fff;
+        border: none;
     }
 
     .imh-piechart-col {
@@ -338,6 +352,7 @@ if ($isCPanelServer) {
         border: 1px solid #ccc;
         border-radius: 8px;
         display: block;
+        background: #f9f9f9;
     }
 
     .imh-width-full {
@@ -351,6 +366,7 @@ if ($isCPanelServer) {
         border: 1px solid #ccc;
         border-radius: 8px;
         display: block;
+        background: #f9f9f9;
     }
 
     .imh-box--footer {
@@ -407,6 +423,7 @@ if ($isCPanelServer) {
         border: 1px solid #ccc;
         border-radius: 8px;
         display: block;
+        background: #f9f9f9;
     }
 
     .imh-small-note {
@@ -506,6 +523,7 @@ if ($isCPanelServer) {
         display: block;
         margin-left: auto;
         margin-right: auto;
+        background: #fff;
     }
 
     #PiechartUsersCPU,
@@ -729,7 +747,10 @@ for ($i = 0; $i < 60; $i++) {
 }
 echo '</select>';
 
-echo ' <input type="submit" name="set_time" value="Set Time Range" class="imh-btn">';
+echo ' <input type="submit" name="set_time" value="Set New Time Range" class="imh-btn">';
+if ($start_hour != 0 || $start_min != 0 || $end_hour != 23 || $end_min != 59) {
+    echo ' <input type="submit" name="reset_time" value="Reset Time Range" class="imh-btn imh-red-btn">';
+}
 echo '</form>';
 
 
