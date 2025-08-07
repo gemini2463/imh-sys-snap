@@ -4608,21 +4608,22 @@ detect_control_panel() {
     fi
 }
 
-# Function to install package
+# Function to install sys-snap (the Perl script), either the yum package `imh-sys-snap` (the imhbase repository) or via manual download
 install_package() {
     local package=$1
 
+    echo ""
     print_message "$YELLOW" "Checking repositories for $package..."
 
     if command_exists yum; then
         if yum install -y "$package"; then
-            print_message "$GREEN" "$package package installed with yum."
+            print_message "$GREEN" "$package yum repository check complete."
             return 0
         fi
         print_message "$YELLOW" "Package $package not found in yum. Attempting manual installation."
     elif command_exists apt-get; then
         if apt-get update && apt-get install -y "$package"; then
-            print_message "$GREEN" "$package package installed with apt-get."
+            print_message "$GREEN" "$package apt repository check complete."
             return 0
         fi
         print_message "$YELLOW" "Package $package not found in apt. Attempting manual installation."
