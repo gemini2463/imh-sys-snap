@@ -142,8 +142,9 @@ copy_if_changed() {
             return
         else
             # Optionally backup old version
-            cp -p "$dest" "${dest}.bak.$(date +%Y%m%d_%H%M%S)"
-            print_message "$YELLOW" "Backing up and replacing $dest"
+            #cp -p "$dest" "${dest}.bak.$(date +%Y%m%d_%H%M%S)"
+            # print_message "$YELLOW" "Backing up and replacing $dest"
+            print_message "$YELLOW" "Replacing $dest"
         fi
     fi
     cp -p "$src" "$dest"
@@ -344,10 +345,10 @@ update_cwp_config() {
     [[ -w "$target" ]] || error_exit "Cannot write to target file: $target"
     [[ -f "$include_file" ]] || error_exit "Include file does not exist: $include_file"
 
-    # Create backup
-    local backup="${target}.bak.$(date +%Y%m%d_%H%M%S)"
-    copy_if_changed "$target" "$backup" || error_exit "Failed to create backup"
-    print_message "$GREEN" "Backup created: $backup"
+    # Optional backup
+    # local backup="${target}.bak.$(date +%Y%m%d_%H%M%S)"
+    # copy_if_changed "$target" "$backup" || error_exit "Failed to create backup"
+    # print_message "$GREEN" "Backup created: $backup"
 
     # Check if include already exists
     if grep -Fq "include('${include_file}')" "$target" ||
