@@ -20,6 +20,13 @@ readonly BRIGHTBLUE='\033[1;34m'
 readonly YELLOW='\033[1;33m'
 readonly NC='\033[0m' # No Color
 
+# Function to check if running as root
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        error_exit "This script must be run as root"
+    fi
+}
+
 # Function to print colored output
 print_message() {
     local color=$1
@@ -44,12 +51,58 @@ cleanup() {
 # Set up trap to ensure cleanup on exit
 trap cleanup EXIT INT TERM
 
-# Function to check if running as root
-check_root() {
-    if [[ $EUID -ne 0 ]]; then
-        error_exit "This script must be run as root"
+# Function to detect control panel
+detect_control_panel() {
+    if [[ (-d /usr/local/cpanel || -d /var/cpanel || -d /etc/cpanel) &&
+        (-f /usr/local/cpanel/cpanel || -f /usr/local/cpanel/version) ]]; then
+        echo "cpanel"
+    elif [[ -d /usr/local/cwpsrv ]]; then
+        echo "cwp"
+    else
+        echo "none"
     fi
 }
+
+if [[ "${1:-}" == "--uninstall" ]]; then
+    uninstall_main() {
+        echo -e "\033[0;31mUninstalling $SCRIPT_NAME...\033[0m"
+        echo ""
+
+        # Detect control panel type
+        local panel=$(detect_control_panel)
+
+        case "$panel" in
+        "cpanel")
+            echo "Removing cPanel plugin files..."
+            rm -rf "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME"
+            rm -f "/usr/local/cpanel/whostmgr/docroot/addon_plugins/$SCRIPT_NAME.png"
+            rm -f "/var/cpanel/apps/$SCRIPT_NAME.conf"
+            if [[ -x "/usr/local/cpanel/bin/unregister_appconfig" ]]; then
+                /usr/local/cpanel/bin/unregister_appconfig "$SCRIPT_NAME.conf" || true
+            fi
+            ;;
+        "cwp")
+            echo "Removing CWP plugin files..."
+            rm -f "/usr/local/cwpsrv/htdocs/resources/admin/modules/$SCRIPT_NAME.php"
+            rm -f "/usr/local/cwpsrv/htdocs/admin/design/img/$SCRIPT_NAME.png"
+            rm -f "/usr/local/cwpsrv/htdocs/admin/design/js/$SCRIPT_NAME.js"
+            # rm -f "/usr/local/cwpsrv/htdocs/resources/admin/include/imh-plugins.php"
+            # Optional: remove line from 3rdparty.php
+            # sed -i "/imh-plugins.php/d" "/usr/local/cwpsrv/htdocs/resources/admin/include/3rdparty.php" || true
+            ;;
+        *)
+            echo "Removing plain install files..."
+            rm -rf "/root/$SCRIPT_NAME"
+            ;;
+        esac
+
+        echo ""
+        echo -e "\033[0;32mUninstall complete.\033[0m"
+        exit 0
+    }
+
+    uninstall_main
+fi
 
 # Function to check if command exists
 command_exists() {
@@ -159,18 +212,6 @@ create_directory() {
         mkdir -p "$dir" || error_exit "Failed to create directory: $dir"
         chmod "$perms" "$dir" || error_exit "Failed to set permissions on: $dir"
         print_message "$GREEN" "Created directory: $dir"
-    fi
-}
-
-# Function to detect control panel
-detect_control_panel() {
-    if [[ (-d /usr/local/cpanel || -d /var/cpanel || -d /etc/cpanel) &&
-        (-f /usr/local/cpanel/cpanel || -f /usr/local/cpanel/version) ]]; then
-        echo "cpanel"
-    elif [[ -d /usr/local/cwpsrv ]]; then
-        echo "cwp"
-    else
-        echo "none"
     fi
 }
 

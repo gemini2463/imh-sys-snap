@@ -601,37 +601,6 @@ export default defineConfig([
 </html>
 </file>
 
-<file path="charts/package.json">
-{
-  "name": "imh-sys-snap",
-  "private": true,
-  "version": "0.1.5",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "chart.js": "^4.5.0",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.30.1",
-    "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "@vitejs/plugin-react": "^4.6.0",
-    "eslint": "^9.30.1",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^16.3.0",
-    "vite": "^7.0.4"
-  }
-}
-</file>
-
 <file path="charts/vite.config.js">
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
@@ -758,48 +727,6 @@ Error generating stack: `+l.message+`
 
 <file path="imh-sys-snap.js.sha256">
 d40cf183dd7bb99509d8b41f4d1d8ddadca39769bd5751076a942bb67ca92804  imh-sys-snap.js
-</file>
-
-<file path="README.md">
-# imh-sys-snap, v0.1.5
-sys-snap Web Interface for cPanel/WHM and CWP
-
-- cPanel/WHM path: `/usr/local/cpanel/whostmgr/docroot/cgi/imh-sys-snap/index.php`
-- CWP path: `/usr/local/cwpsrv/htdocs/resources/admin/modules/imh-sys-snap.php`
-
-# Installation
-- Run as the Root user: `curl -fsSL https://raw.githubusercontent.com/gemini2463/imh-sys-snap/master/install.sh | sh`
-- Maybe soon?: `curl -fsSL https://repo-ded.inmotionhosting.com/imh-plugins/imh-sys-snap/0.1.4/install.sh | sh`
-
-# Files
-
-## Shell installer
-- install.sh
-
-## Main script
-- index.php - Identical to `imh-sys-snap.php`.
-- index.php.sha256 - `sha256sum index.php > index.php.sha256`
-- imh-sys-snap.php - Identical to `index.php`.
-- imh-sys-snap.php.sha256 - `sha256sum imh-sys-snap.php > imh-sys-snap.php.sha256`
-
-## Javascript
-- imh-sys-snap.js - Bundle React or any other javascript in this file.
-- imh-sys-snap.js.sha256 - `sha256sum imh-sys-snap.js > imh-sys-snap.js.sha256`
-
-## Icon
-- imh-sys-snap.png - [48x48 png image](https://api.docs.cpanel.net/guides/guide-to-whm-plugins/guide-to-whm-plugins-plugin-files/#icons)
-- imh-sys-snap.png.sha256 - `sha256sum imh-sys-snap.png > imh-sys-snap.png.sha256`
-
-## cPanel conf
-- imh-sys-snap.conf - [AppConfig Configuration File](https://api.docs.cpanel.net/guides/guide-to-whm-plugins/guide-to-whm-plugins-appconfig-configuration-file)
-- imh-sys-snap.conf.sha256 - `sha256sum imh-sys-snap.conf > imh-sys-snap.conf.sha256`
-
-## CWP include
-- imh-plugins.php - [CWP include](https://wiki.centos-webpanel.com/how-to-build-a-cwp-module)
-- imh-plugins.php.sha256 - `sha256sum imh-plugins.php > imh-plugins.php.sha256`
-
-## sha256 one-liner
-- `for file in index.php imh-plugins.php imh-sys-snap.conf imh-sys-snap.js imh-sys-snap.php imh-sys-snap.png; do sha256sum "$file" > "$file.sha256"; done`
 </file>
 
 <file path="sys-snap.pl">
@@ -1610,6 +1537,37 @@ sub module_sanity_check {
 }
 </file>
 
+<file path="charts/package.json">
+{
+  "name": "imh-sys-snap",
+  "private": true,
+  "version": "0.1.5",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "chart.js": "^4.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.1",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.6.0",
+    "eslint": "^9.30.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.20",
+    "globals": "^16.3.0",
+    "vite": "^7.0.4"
+  }
+}
+</file>
+
 <file path="imh-plugins.php">
 <?php
 //This file is used to dynamically generate the admin panel menu for IMH plugins
@@ -1647,6 +1605,48 @@ foreach (glob($plugin_dir . 'imh-*.php') as $filename) {
 
 <file path="imh-plugins.php.sha256">
 c8b15737f85b76e1510f7321bdf4b92bdc61e4790d5fec3bef0b142b0efe8cbf  imh-plugins.php
+</file>
+
+<file path="README.md">
+# imh-sys-snap, v0.1.5
+sys-snap Web Interface for cPanel/WHM and CWP
+
+- cPanel/WHM path: `/usr/local/cpanel/whostmgr/docroot/cgi/imh-sys-snap/index.php`
+- CWP path: `/usr/local/cwpsrv/htdocs/resources/admin/modules/imh-sys-snap.php`
+
+# Installation
+- Run as the Root user: `curl -fsSL https://raw.githubusercontent.com/gemini2463/imh-sys-snap/master/install.sh | sh`
+- Maybe soon?: `curl -fsSL https://repo-ded.inmotionhosting.com/imh-plugins/imh-sys-snap/0.1.4/install.sh | sh`
+
+# Files
+
+## Shell installer
+- install.sh
+
+## Main script
+- index.php - Identical to `imh-sys-snap.php`.
+- index.php.sha256 - `sha256sum index.php > index.php.sha256`
+- imh-sys-snap.php - Identical to `index.php`.
+- imh-sys-snap.php.sha256 - `sha256sum imh-sys-snap.php > imh-sys-snap.php.sha256`
+
+## Javascript
+- imh-sys-snap.js - Bundle React or any other javascript in this file.
+- imh-sys-snap.js.sha256 - `sha256sum imh-sys-snap.js > imh-sys-snap.js.sha256`
+
+## Icon
+- imh-sys-snap.png - [48x48 png image](https://api.docs.cpanel.net/guides/guide-to-whm-plugins/guide-to-whm-plugins-plugin-files/#icons)
+- imh-sys-snap.png.sha256 - `sha256sum imh-sys-snap.png > imh-sys-snap.png.sha256`
+
+## cPanel conf
+- imh-sys-snap.conf - [AppConfig Configuration File](https://api.docs.cpanel.net/guides/guide-to-whm-plugins/guide-to-whm-plugins-appconfig-configuration-file)
+- imh-sys-snap.conf.sha256 - `sha256sum imh-sys-snap.conf > imh-sys-snap.conf.sha256`
+
+## CWP include
+- imh-plugins.php - [CWP include](https://wiki.centos-webpanel.com/how-to-build-a-cwp-module)
+- imh-plugins.php.sha256 - `sha256sum imh-plugins.php > imh-plugins.php.sha256`
+
+## sha256 one-liner
+- `for file in index.php imh-plugins.php imh-sys-snap.conf imh-sys-snap.js imh-sys-snap.php imh-sys-snap.png; do sha256sum "$file" > "$file.sha256"; done`
 </file>
 
 <file path="imh-sys-snap.php">
@@ -4498,6 +4498,13 @@ readonly BRIGHTBLUE='\033[1;34m'
 readonly YELLOW='\033[1;33m'
 readonly NC='\033[0m' # No Color
 
+# Function to check if running as root
+check_root() {
+    if [[ $EUID -ne 0 ]]; then
+        error_exit "This script must be run as root"
+    fi
+}
+
 # Function to print colored output
 print_message() {
     local color=$1
@@ -4522,12 +4529,58 @@ cleanup() {
 # Set up trap to ensure cleanup on exit
 trap cleanup EXIT INT TERM
 
-# Function to check if running as root
-check_root() {
-    if [[ $EUID -ne 0 ]]; then
-        error_exit "This script must be run as root"
+# Function to detect control panel
+detect_control_panel() {
+    if [[ (-d /usr/local/cpanel || -d /var/cpanel || -d /etc/cpanel) &&
+        (-f /usr/local/cpanel/cpanel || -f /usr/local/cpanel/version) ]]; then
+        echo "cpanel"
+    elif [[ -d /usr/local/cwpsrv ]]; then
+        echo "cwp"
+    else
+        echo "none"
     fi
 }
+
+if [[ "${1:-}" == "--uninstall" ]]; then
+    uninstall_main() {
+        echo -e "\033[0;31mUninstalling $SCRIPT_NAME...\033[0m"
+        echo ""
+
+        # Detect control panel type
+        local panel=$(detect_control_panel)
+
+        case "$panel" in
+        "cpanel")
+            echo "Removing cPanel plugin files..."
+            rm -rf "/usr/local/cpanel/whostmgr/docroot/cgi/$SCRIPT_NAME"
+            rm -f "/usr/local/cpanel/whostmgr/docroot/addon_plugins/$SCRIPT_NAME.png"
+            rm -f "/var/cpanel/apps/$SCRIPT_NAME.conf"
+            if [[ -x "/usr/local/cpanel/bin/unregister_appconfig" ]]; then
+                /usr/local/cpanel/bin/unregister_appconfig "$SCRIPT_NAME.conf" || true
+            fi
+            ;;
+        "cwp")
+            echo "Removing CWP plugin files..."
+            rm -f "/usr/local/cwpsrv/htdocs/resources/admin/modules/$SCRIPT_NAME.php"
+            rm -f "/usr/local/cwpsrv/htdocs/admin/design/img/$SCRIPT_NAME.png"
+            rm -f "/usr/local/cwpsrv/htdocs/admin/design/js/$SCRIPT_NAME.js"
+            # rm -f "/usr/local/cwpsrv/htdocs/resources/admin/include/imh-plugins.php"
+            # Optional: remove line from 3rdparty.php
+            # sed -i "/imh-plugins.php/d" "/usr/local/cwpsrv/htdocs/resources/admin/include/3rdparty.php" || true
+            ;;
+        *)
+            echo "Removing plain install files..."
+            rm -rf "/root/$SCRIPT_NAME"
+            ;;
+        esac
+
+        echo ""
+        echo -e "\033[0;32mUninstall complete.\033[0m"
+        exit 0
+    }
+
+    uninstall_main
+fi
 
 # Function to check if command exists
 command_exists() {
@@ -4637,18 +4690,6 @@ create_directory() {
         mkdir -p "$dir" || error_exit "Failed to create directory: $dir"
         chmod "$perms" "$dir" || error_exit "Failed to set permissions on: $dir"
         print_message "$GREEN" "Created directory: $dir"
-    fi
-}
-
-# Function to detect control panel
-detect_control_panel() {
-    if [[ (-d /usr/local/cpanel || -d /var/cpanel || -d /etc/cpanel) &&
-        (-f /usr/local/cpanel/cpanel || -f /usr/local/cpanel/version) ]]; then
-        echo "cpanel"
-    elif [[ -d /usr/local/cwpsrv ]]; then
-        echo "cwp"
-    else
-        echo "none"
     fi
 }
 
