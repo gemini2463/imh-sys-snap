@@ -11,7 +11,7 @@
  *   - CWP:       /usr/local/cwpsrv/htdocs/resources/admin/modules/imh-sys-snap.php
  *
  * Maintainer: InMotion Hosting
- * Version: 0.1.4
+ * Version: 0.1.5
  */
 
 
@@ -225,7 +225,7 @@ if ($isCPanelServer) {
     .imh-box a,
     .imh-footer-box a,
     .imh-box--narrow a {
-        color: rgb(175, 82, 32);
+        color: #C52227;
     }
 
     .panel-body a:hover,
@@ -236,7 +236,7 @@ if ($isCPanelServer) {
     .imh-box a:focus,
     .imh-footer-box a:focus,
     .imh-box--narrow a:focus {
-        color: rgb(97, 51, 27);
+        color: #d33a41;
     }
 
     .imh-btn {
@@ -246,7 +246,7 @@ if ($isCPanelServer) {
     }
 
     .imh-red-btn {
-        background: #f44336;
+        background: #C52227;
         color: #fff;
         border: none;
     }
@@ -312,8 +312,8 @@ if ($isCPanelServer) {
 
     .tabs-nav button.active {
         background: #fff;
-        border-bottom: 2px solid rgb(175, 82, 32);
-        color: rgb(175, 82, 32);
+        border-bottom: 2px solid #C52227;
+        color: #C52227;
         font-weight: 600;
     }
 

@@ -1,4 +1,4 @@
-# imh-sys-snap, v0.1.4
+# imh-sys-snap, v0.1.5
 sys-snap Web Interface for cPanel/WHM and CWP
 
 - cPanel/WHM path: `/usr/local/cpanel/whostmgr/docroot/cgi/imh-sys-snap/index.php`

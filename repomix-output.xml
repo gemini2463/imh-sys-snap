@@ -605,7 +605,7 @@ export default defineConfig([
 {
   "name": "imh-sys-snap",
   "private": true,
-  "version": "0.1.4",
+  "version": "0.1.5",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -667,10 +667,6 @@ lerna-debug.log*
 *.njsproj
 *.sln
 *.sw?
-</file>
-
-<file path="imh-plugins.php.sha256">
-c8b15737f85b76e1510f7321bdf4b92bdc61e4790d5fec3bef0b142b0efe8cbf  imh-plugins.php
 </file>
 
 <file path="imh-sys-snap.conf">
@@ -765,7 +761,7 @@ d40cf183dd7bb99509d8b41f4d1d8ddadca39769bd5751076a942bb67ca92804  imh-sys-snap.j
 </file>
 
 <file path="README.md">
-# imh-sys-snap, v0.1.4
+# imh-sys-snap, v0.1.5
 sys-snap Web Interface for cPanel/WHM and CWP
 
 - cPanel/WHM path: `/usr/local/cpanel/whostmgr/docroot/cgi/imh-sys-snap/index.php`
@@ -1649,6 +1645,10 @@ foreach (glob($plugin_dir . 'imh-*.php') as $filename) {
 </script>
 </file>
 
+<file path="imh-plugins.php.sha256">
+c8b15737f85b76e1510f7321bdf4b92bdc61e4790d5fec3bef0b142b0efe8cbf  imh-plugins.php
+</file>
+
 <file path="imh-sys-snap.php">
 <?php
 // System Snapshot
@@ -1663,7 +1663,7 @@ foreach (glob($plugin_dir . 'imh-*.php') as $filename) {
  *   - CWP:       /usr/local/cwpsrv/htdocs/resources/admin/modules/imh-sys-snap.php
  *
  * Maintainer: InMotion Hosting
- * Version: 0.1.4
+ * Version: 0.1.5
  */
 
 
@@ -1877,7 +1877,7 @@ if ($isCPanelServer) {
     .imh-box a,
     .imh-footer-box a,
     .imh-box--narrow a {
-        color: rgb(175, 82, 32);
+        color: #C52227;
     }
 
     .panel-body a:hover,
@@ -1888,7 +1888,7 @@ if ($isCPanelServer) {
     .imh-box a:focus,
     .imh-footer-box a:focus,
     .imh-box--narrow a:focus {
-        color: rgb(97, 51, 27);
+        color: #d33a41;
     }
 
     .imh-btn {
@@ -1898,7 +1898,7 @@ if ($isCPanelServer) {
     }
 
     .imh-red-btn {
-        background: #f44336;
+        background: #C52227;
         color: #fff;
         border: none;
     }
@@ -1964,8 +1964,8 @@ if ($isCPanelServer) {
 
     .tabs-nav button.active {
         background: #fff;
-        border-bottom: 2px solid rgb(175, 82, 32);
-        color: rgb(175, 82, 32);
+        border-bottom: 2px solid #C52227;
+        color: #C52227;
         font-weight: 600;
     }
 
@@ -3059,7 +3059,7 @@ if ($isCPanelServer) {
 </file>
 
 <file path="imh-sys-snap.php.sha256">
-83af109434a85cdf16280654e190701f904884b21a20d3cbf50ed7a436150093  imh-sys-snap.php
+19587188853d7e1a075179a046e075bf8d848f682aad6b1586a905052a90c58e  imh-sys-snap.php
 </file>
 
 <file path="index.php">
@@ -3076,7 +3076,7 @@ if ($isCPanelServer) {
  *   - CWP:       /usr/local/cwpsrv/htdocs/resources/admin/modules/imh-sys-snap.php
  *
  * Maintainer: InMotion Hosting
- * Version: 0.1.4
+ * Version: 0.1.5
  */
 
 
@@ -3290,7 +3290,7 @@ if ($isCPanelServer) {
     .imh-box a,
     .imh-footer-box a,
     .imh-box--narrow a {
-        color: rgb(175, 82, 32);
+        color: #C52227;
     }
 
     .panel-body a:hover,
@@ -3301,7 +3301,7 @@ if ($isCPanelServer) {
     .imh-box a:focus,
     .imh-footer-box a:focus,
     .imh-box--narrow a:focus {
-        color: rgb(97, 51, 27);
+        color: #d33a41;
     }
 
     .imh-btn {
@@ -3311,7 +3311,7 @@ if ($isCPanelServer) {
     }
 
     .imh-red-btn {
-        background: #f44336;
+        background: #C52227;
         color: #fff;
         border: none;
     }
@@ -3377,8 +3377,8 @@ if ($isCPanelServer) {
 
     .tabs-nav button.active {
         background: #fff;
-        border-bottom: 2px solid rgb(175, 82, 32);
-        color: rgb(175, 82, 32);
+        border-bottom: 2px solid #C52227;
+        color: #C52227;
         font-weight: 600;
     }
 
@@ -4472,7 +4472,7 @@ if ($isCPanelServer) {
 </file>
 
 <file path="index.php.sha256">
-83af109434a85cdf16280654e190701f904884b21a20d3cbf50ed7a436150093  index.php
+19587188853d7e1a075179a046e075bf8d848f682aad6b1586a905052a90c58e  index.php
 </file>
 
 <file path="install.sh">
@@ -4485,7 +4485,7 @@ set -euo pipefail
 #set -x
 
 # Script metadata
-readonly SCRIPT_VERSION="0.1.4"
+readonly SCRIPT_VERSION="0.1.5"
 readonly SCRIPT_NAME="imh-sys-snap"
 readonly BASE_URL="https://raw.githubusercontent.com/gemini2463/$SCRIPT_NAME/master"
 #readonly BASE_URL="https://repo-ded.inmotionhosting.com/imh-plugins/$SCRIPT_NAME/$SCRIPT_VERSION"
